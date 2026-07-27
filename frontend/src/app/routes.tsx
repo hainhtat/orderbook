@@ -1,24 +1,52 @@
+import { Suspense, type ComponentType, type LazyExoticComponent } from 'react'
 import type { RouteObject } from 'react-router-dom'
+import {
+  CustomerDetailPage,
+  CustomersListPage,
+  DashboardPage,
+  LoginPage,
+  NotFoundPage,
+  OrderCreatePage,
+  OrderDetailPage,
+  OrdersListPage,
+  PreordersPage,
+  ProductCreatePage,
+  ProductDetailPage,
+  ProductsListPage,
+  RegisterPage,
+  SettingsPage,
+  ShopSetupPage,
+} from '@/app/lazy-pages'
 import {
   AuthGuard,
   PublicOnlyGuard,
   ShopGuard,
 } from '@/features/auth/auth-guard'
-import { LoginPage } from '@/features/auth/login-page'
 import { OnboardingGuard } from '@/features/auth/onboarding-guard'
-import { RegisterPage } from '@/features/auth/register-page'
-import { CustomerDetailPage } from '@/features/customers/customer-detail-page'
-import { CustomersListPage } from '@/features/customers/customers-list-page'
-import { ProductCreatePage } from '@/features/products/product-create-page'
-import { ProductDetailPage } from '@/features/products/product-detail-page'
-import { ProductsListPage } from '@/features/products/products-list-page'
-import { ShopSetupPage } from '@/features/shops/shop-setup-page'
 import { AppLayout } from '@/layouts/app-layout'
 import { AuthLayout } from '@/layouts/auth-layout'
-import { DashboardPage } from '@/pages/dashboard-page'
-import { NotFoundPage } from '@/pages/not-found-page'
-import { SettingsPage } from '@/pages/settings-page'
 import { Navigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+
+function LoadingFallback() {
+  const { t } = useTranslation()
+  return (
+    <div className="flex min-h-48 items-center justify-center" role="status" aria-live="polite">
+      <span className="sr-only">{t('common.loading', { defaultValue: 'Loading…' })}</span>
+      <span className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+    </div>
+  )
+}
+
+function lazyElement(Page: LazyExoticComponent<ComponentType>) {
+  return (
+    <Suspense
+      fallback={<LoadingFallback />}
+    >
+      <Page />
+    </Suspense>
+  )
+}
 
 export const appRoutes: RouteObject[] = [
   {
@@ -33,11 +61,11 @@ export const appRoutes: RouteObject[] = [
         children: [
           {
             path: '/auth/login',
-            element: <LoginPage />,
+            element: lazyElement(LoginPage),
           },
           {
             path: '/auth/register',
-            element: <RegisterPage />,
+            element: lazyElement(RegisterPage),
           },
         ],
       },
@@ -51,7 +79,7 @@ export const appRoutes: RouteObject[] = [
         children: [
           {
             path: '/onboarding/shop',
-            element: <ShopSetupPage />,
+            element: lazyElement(ShopSetupPage),
           },
         ],
       },
@@ -63,31 +91,47 @@ export const appRoutes: RouteObject[] = [
             children: [
               {
                 path: '/dashboard',
-                element: <DashboardPage />,
+                element: lazyElement(DashboardPage),
               },
               {
                 path: '/products',
-                element: <ProductsListPage />,
+                element: lazyElement(ProductsListPage),
               },
               {
                 path: '/products/new',
-                element: <ProductCreatePage />,
+                element: lazyElement(ProductCreatePage),
               },
               {
                 path: '/products/:id',
-                element: <ProductDetailPage />,
+                element: lazyElement(ProductDetailPage),
               },
               {
                 path: '/customers',
-                element: <CustomersListPage />,
+                element: lazyElement(CustomersListPage),
               },
               {
                 path: '/customers/:id',
-                element: <CustomerDetailPage />,
+                element: lazyElement(CustomerDetailPage),
+              },
+              {
+                path: '/orders',
+                element: lazyElement(OrdersListPage),
+              },
+              {
+                path: '/pre-orders',
+                element: lazyElement(PreordersPage),
+              },
+              {
+                path: '/orders/new',
+                element: lazyElement(OrderCreatePage),
+              },
+              {
+                path: '/orders/:id',
+                element: lazyElement(OrderDetailPage),
               },
               {
                 path: '/settings',
-                element: <SettingsPage />,
+                element: lazyElement(SettingsPage),
               },
             ],
           },
@@ -97,6 +141,6 @@ export const appRoutes: RouteObject[] = [
   },
   {
     path: '*',
-    element: <NotFoundPage />,
+    element: lazyElement(NotFoundPage),
   },
 ]

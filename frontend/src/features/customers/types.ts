@@ -2,18 +2,35 @@ export type Customer = {
   id: string
   name: string
   phone: string
-  address: string | null
+  townshipOrCity: string | null
+  detailedAddress: string | null
+  addressLabel: string | null
   notes: string | null
+  lastOrder: {
+    id: string
+    createdAt: string
+    totalMMK: number
+    itemSummary: string
+  } | null
 }
 
 export type CreateCustomerInput = {
   name: string
   phone: string
-  address?: string
+  townshipOrCity?: string
+  detailedAddress?: string
+  addressLabel?: string
   notes?: string
 }
 
-export type UpdateCustomerInput = Partial<CreateCustomerInput>
+export type UpdateCustomerInput = {
+  name?: string
+  phone?: string
+  townshipOrCity?: string | null
+  detailedAddress?: string | null
+  addressLabel?: string | null
+  notes?: string
+}
 
 export type CustomerOrder = {
   id: string

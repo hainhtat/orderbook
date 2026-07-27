@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Developer"
+  short_description: "Implement Order Notebook mobile features"
+  default_prompt: "Use $mobile-developer to implement the requested mobile feature."

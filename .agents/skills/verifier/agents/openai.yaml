@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Verifier"
+  short_description: "Verify completed work against the project spec"
+  default_prompt: "Use $verifier to verify the completed implementation against the project spec."

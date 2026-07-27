@@ -12,10 +12,10 @@ import type {
   UpdateCustomerInput,
 } from '@/features/customers/types'
 
-export function useCustomers(search?: string) {
+export function useCustomers(search?: string, page = 1, limit = 20) {
   return useQuery({
-    queryKey: customerKeys.list(search),
-    queryFn: () => fetchCustomers(search),
+    queryKey: [...customerKeys.list(search), page, limit],
+    queryFn: () => fetchCustomers(search, page, limit),
   })
 }
 

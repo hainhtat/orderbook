@@ -1,5 +1,5 @@
-import { Column, Text } from '@expo/ui';
-import { useLocalSearchParams } from 'expo-router';
+import { Button, Column, Text } from '@expo/ui';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { ErrorState, LoadingState } from '@/components/ListStates';
@@ -11,6 +11,7 @@ import { formatMMK } from '@/utils/format-mmk';
 
 export function CustomerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { t } = useLocale();
   const { colors } = useTheme();
   const customerQuery = useCustomer(id ?? '');
@@ -52,13 +53,39 @@ export function CustomerDetailScreen() {
 
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Column spacing={12}>
-            {customer.address ? (
-              <InfoBlock label={t('customers.address')} value={customer.address} colors={colors} />
+            <Button
+              testID="customer-edit"
+              label={t('customers.edit')}
+              onPress={() => router.push(`/customers/${customer.id}/edit`)}
+            />
+            {customer.townshipOrCity ? (
+              <InfoBlock
+                label={t('customers.townshipOrCity')}
+                value={customer.townshipOrCity}
+                colors={colors}
+              />
+            ) : null}
+            {customer.detailedAddress ? (
+              <InfoBlock
+                label={t('customers.detailedAddress')}
+                value={customer.detailedAddress}
+                colors={colors}
+              />
+            ) : null}
+            {customer.addressLabel ? (
+              <InfoBlock
+                label={t('customers.addressLabel')}
+                value={customer.addressLabel}
+                colors={colors}
+              />
             ) : null}
             {customer.notes ? (
               <InfoBlock label={t('customers.notes')} value={customer.notes} colors={colors} />
             ) : null}
-            {!customer.address && !customer.notes ? (
+            {!customer.townshipOrCity &&
+            !customer.detailedAddress &&
+            !customer.addressLabel &&
+            !customer.notes ? (
               <Text textStyle={{ color: colors.textMuted }}>{t('customers.noExtraInfo')}</Text>
             ) : null}
           </Column>

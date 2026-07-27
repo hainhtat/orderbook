@@ -6,9 +6,21 @@ export function createProductController(products: ProductService, categories: Ca
   return {
     list: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { includeArchived } = matchedData(req) as { includeArchived?: boolean };
-        const items = await products.list(req.shop!.shopId, includeArchived);
-        res.json({ products: items });
+        const { includeArchived, q, categoryId, lowStock, page, limit } = matchedData(req) as {
+          includeArchived?: boolean;
+          q?: string;
+          categoryId?: string;
+          lowStock?: boolean; page?: number; limit?: number;
+        };
+        const items = await products.list(req.shop!.shopId, {
+          includeArchived,
+          search: q,
+          categoryId,
+          lowStock,
+          page,
+          limit,
+        });
+        res.json({ products: items.items, pagination: items.pagination });
       } catch (e) {
         next(e);
       }
@@ -87,6 +99,28 @@ export function createProductController(products: ProductService, categories: Ca
         const data = matchedData(req) as Parameters<CategoryService['create']>[1];
         const category = await categories.create(req.shop!.shopId, data);
         res.status(201).json({ category });
+      } catch (e) {
+        next(e);
+      }
+    },
+
+    updateCategory: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id, ...data } = matchedData(req) as { id: string } & Parameters<
+          CategoryService['update']
+        >[2];
+        const category = await categories.update(req.shop!.shopId, id, data);
+        res.json({ category });
+      } catch (e) {
+        next(e);
+      }
+    },
+
+    deleteCategory: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id } = matchedData(req) as { id: string };
+        await categories.delete(req.shop!.shopId, id);
+        res.status(204).send();
       } catch (e) {
         next(e);
       }

@@ -1,38 +1,54 @@
-import { PackageOpen } from 'lucide-react'
+import { ArrowDownUp, Box, PackageOpen, Plus, Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { Input } from '@/components/ui/input'
 import { useProducts } from '@/features/products/use-products'
 import { formatMMK, isLowStock } from '@/lib/format-mmk'
 
 export function ProductsListPage() {
   const { t } = useTranslation('features')
-  const { data: products, isLoading, isError, refetch } = useProducts()
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const { data: products, isLoading, isError, refetch } = useProducts(false, page, 20)
+  const [newestFirst, setNewestFirst] = useState(true)
+  const visibleProducts = useMemo(() => {
+    const normalized = search.trim().toLocaleLowerCase()
+    const filtered = products?.filter((product) =>
+      !normalized || product.name.toLocaleLowerCase().includes(normalized) || product.sku.toLocaleLowerCase().includes(normalized),
+    ) ?? []
+    return newestFirst ? filtered : [...filtered].reverse()
+  }, [newestFirst, products, search])
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
             {t('products.title')}
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="mt-1 hidden text-muted-foreground sm:block">
             {t('products.description')}
           </p>
         </div>
-        <Button asChild>
-          <Link to="/products/new">{t('products.addProduct')}</Link>
+        <Button asChild size="icon" className="h-12 w-12 shrink-0 rounded-full" aria-label={t('products.addProduct')}>
+          <Link to="/products/new"><Plus className="h-6 w-6" /></Link>
         </Button>
+      </div>
+      <div className="space-y-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <Input className="h-12 rounded-full bg-card pl-11" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('products.searchPlaceholder')} />
+        </div>
+        <div className="flex items-center justify-between text-sm">
+          <p className="font-semibold">{t('products.count', { count: visibleProducts.length })}</p>
+          <Button type="button" variant="ghost" size="sm" className="gap-1.5 text-muted-foreground" onClick={() => setNewestFirst((value) => !value)}>
+            <ArrowDownUp className="h-4 w-4" />{newestFirst ? t('products.sortNewest') : t('products.sortOldest')}
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
@@ -72,59 +88,32 @@ export function ProductsListPage() {
           </Button>
         </div>
       ) : null}
+      {!isLoading && !isError && products && products.length > 0 && (products as typeof products & { pagination?: { totalPages: number } }).pagination?.totalPages! > 1 ? <div className="flex items-center justify-between"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button><span className="text-sm text-muted-foreground">Page {page} of {(products as typeof products & { pagination?: { totalPages: number } }).pagination?.totalPages}</span><Button variant="outline" size="sm" disabled={page >= ((products as typeof products & { pagination?: { totalPages: number } }).pagination?.totalPages ?? 1)} onClick={() => setPage(page + 1)}>Next</Button></div> : null}
 
       {!isLoading && !isError && products && products.length > 0 ? (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('products.columns.name')}</TableHead>
-                <TableHead>{t('products.columns.sku')}</TableHead>
-                <TableHead className="text-right">
-                  {t('products.columns.price')}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t('products.columns.stock')}
-                </TableHead>
-                <TableHead>{t('products.columns.status')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <Link
-                      to={`/products/${product.id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {product.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {product.sku}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatMMK(product.priceMMK)}
-                  </TableCell>
-                  <TableCell className="text-right">{product.stockQty}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {product.isArchived ? (
-                        <Badge variant="secondary">
-                          {t('products.status.archived')}
-                        </Badge>
-                      ) : null}
-                      {isLowStock(product.stockQty, product.lowStockAt) ? (
-                        <Badge variant="warning">
-                          {t('products.status.lowStock')}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="grid gap-3 lg:grid-cols-2">
+          {visibleProducts.map((product) => {
+            const available = Math.max(0, product.stockQty - product.reservedQty)
+            return (
+              <Link key={product.id} to={`/products/${product.id}`} className="flex items-center gap-4 rounded-3xl border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-muted">
+                  {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-full w-full rounded-2xl object-cover" /> : <Box className="h-7 w-7 text-muted-foreground" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{product.name}</p>
+                  <p className="text-sm text-muted-foreground">{formatMMK(product.priceMMK)}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">{t('products.sold', { count: product.soldQuantity })}</Badge>
+                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">{t('products.revenue', { amount: formatMMK(product.salesRevenueMMK) })}</Badge>
+                    <Badge variant="secondary">{t('products.available', { count: available })}</Badge>
+                    {product.isArchived ? <Badge variant="secondary">{t('products.status.archived')}</Badge> : null}
+                    {isLowStock(available, product.lowStockAt) ? <Badge variant="warning">{t('products.status.lowStock')}</Badge> : null}
+                  </div>
+                </div>
+                <span className="text-xl text-muted-foreground">›</span>
+              </Link>
+            )
+          })}
         </div>
       ) : null}
     </div>

@@ -21,7 +21,9 @@ import { getFieldErrorCode } from '@/lib/api-field-error'
 export type CustomerFormValues = {
   name: string
   phone: string
-  address: string
+  townshipOrCity: string
+  detailedAddress: string
+  addressLabel: string
   notes: string
 }
 
@@ -45,7 +47,9 @@ export function CustomerForm({
       z.object({
         name: z.string().min(1, t('customers.validation.required')),
         phone: z.string().min(1, t('customers.validation.required')),
-        address: z.string(),
+        townshipOrCity: z.string(),
+        detailedAddress: z.string(),
+        addressLabel: z.string(),
         notes: z.string(),
       }),
     [t],
@@ -56,7 +60,9 @@ export function CustomerForm({
     defaultValues: {
       name: customer?.name ?? '',
       phone: customer?.phone ?? '',
-      address: customer?.address ?? '',
+      townshipOrCity: customer?.townshipOrCity ?? '',
+      detailedAddress: customer?.detailedAddress ?? '',
+      addressLabel: customer?.addressLabel ?? '',
       notes: customer?.notes ?? '',
     },
   })
@@ -109,12 +115,45 @@ export function CustomerForm({
             </FormItem>
           )}
         />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="townshipOrCity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('customers.fields.townshipOrCity')}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="addressLabel"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('customers.fields.addressLabel')}</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder={t('customers.fields.addressLabelPlaceholder')}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
         <FormField
           control={form.control}
-          name="address"
+          name="detailedAddress"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t('customers.fields.address')}</FormLabel>
+              <FormLabel>{t('customers.fields.detailedAddress')}</FormLabel>
               <FormControl>
                 <Textarea rows={3} {...field} />
               </FormControl>
@@ -122,6 +161,7 @@ export function CustomerForm({
             </FormItem>
           )}
         />
+
         <FormField
           control={form.control}
           name="notes"
@@ -150,7 +190,20 @@ export function toCustomerPayload(values: CustomerFormValues) {
   return {
     name: values.name.trim(),
     phone: values.phone.trim(),
-    address: values.address.trim() || undefined,
+    townshipOrCity: values.townshipOrCity.trim() || undefined,
+    detailedAddress: values.detailedAddress.trim() || undefined,
+    addressLabel: values.addressLabel.trim() || undefined,
+    notes: values.notes.trim() || undefined,
+  }
+}
+
+export function toUpdateCustomerPayload(values: CustomerFormValues) {
+  return {
+    name: values.name.trim(),
+    phone: values.phone.trim(),
+    townshipOrCity: values.townshipOrCity.trim() || null,
+    detailedAddress: values.detailedAddress.trim() || null,
+    addressLabel: values.addressLabel.trim() || null,
     notes: values.notes.trim() || undefined,
   }
 }

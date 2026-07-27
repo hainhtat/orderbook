@@ -1,0 +1,4 @@
+interface:
+  display_name: "Focused Testing"
+  short_description: "Add focused, high-value regression tests"
+  default_prompt: "Use $test to add focused tests for this change."

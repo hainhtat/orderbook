@@ -35,6 +35,7 @@ function RootNavigator() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="products" options={{ headerShown: false }} />
           <Stack.Screen name="customers" options={{ headerShown: false }} />
+          <Stack.Screen name="orders" options={{ headerShown: false }} />
         </Stack.Protected>
         <Stack.Protected guard={needsShopSetup}>
           <Stack.Screen name="(setup)" />

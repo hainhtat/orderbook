@@ -10,10 +10,15 @@
   "themeDark": "Dark",
   "english": "English",
   "myanmar": "Myanmar",
+  "switchToEnglish": "Switch to English",
+  "switchToMyanmar": "Switch to Myanmar",
+  "switchToLightTheme": "Switch to light theme",
+  "switchToDarkTheme": "Switch to dark theme",
   "nav": {
     "dashboard": "Dashboard",
     "products": "Products",
     "customers": "Customers",
+    "orders": "Orders",
     "settings": "Settings"
   },
   "errors": {

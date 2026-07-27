@@ -1,4 +1,4 @@
-import { LogOut } from 'lucide-react'
+import { BarChart3, Box, ClipboardList, LogOut, Users } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { LanguageSwitcher } from '@/components/language-switcher'
@@ -11,22 +11,23 @@ export function AppHeader() {
   const { t } = useTranslation('common')
   const { logout, state } = useAuth()
 
-  const userName =
-    state.status === 'authenticated' ? state.user.name : undefined
+  const shopName =
+    state.status === 'authenticated' ? state.shop?.name : undefined
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
-        <div className="flex items-center gap-6">
-          <span className="text-sm font-semibold tracking-tight">
+    <>
+      <header className="sticky top-0 z-40 border-b-2 border-border bg-background/95 shadow-[0_2px_10px_rgba(15,23,42,0.06)] backdrop-blur supports-[backdrop-filter]:bg-background/75 dark:shadow-[0_2px_12px_rgba(0,0,0,0.22)]">
+      <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+          <span className="shrink-0 text-sm font-bold tracking-tight sm:text-base">
             {t('appName')}
           </span>
-          <nav className="hidden items-center gap-1 sm:flex">
+          <nav aria-label={t('navigation')} className="hidden min-w-0 items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex">
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
                 cn(
-                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+                  'whitespace-nowrap rounded-md px-2.5 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground sm:px-3',
                   isActive
                     ? 'bg-accent text-accent-foreground'
                     : 'text-muted-foreground',
@@ -62,6 +63,19 @@ export function AppHeader() {
               {t('nav.customers')}
             </NavLink>
             <NavLink
+              to="/orders"
+              className={({ isActive }) =>
+                cn(
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+                  isActive
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground',
+                )
+              }
+            >
+              {t('nav.orders')}
+            </NavLink>
+            <NavLink
               to="/settings"
               className={({ isActive }) =>
                 cn(
@@ -78,9 +92,9 @@ export function AppHeader() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {userName ? (
-            <span className="hidden text-sm text-muted-foreground md:inline">
-              {userName}
+          {shopName ? (
+            <span className="hidden max-w-40 truncate text-sm font-medium md:inline">
+              {shopName}
             </span>
           ) : null}
           <LanguageSwitcher />
@@ -95,6 +109,20 @@ export function AppHeader() {
           </Button>
         </div>
       </div>
-    </header>
+      </header>
+      <nav aria-label={t('navigation')} className="fixed inset-x-3 bottom-3 z-50 flex items-center justify-around rounded-3xl border bg-card/95 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl backdrop-blur md:hidden">
+        {[
+          ['/orders', ClipboardList, t('nav.orders')],
+          ['/products', Box, t('nav.products')],
+          ['/customers', Users, t('nav.customers')],
+          ['/dashboard', BarChart3, t('nav.dashboard')],
+        ].map(([to, Icon, label]) => (
+          <NavLink key={to as string} to={to as string} className={({ isActive }) => cn('flex min-w-16 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-[10px] font-semibold', isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+            <Icon className="h-5 w-5" />
+            <span>{label as string}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </>
   )
 }

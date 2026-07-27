@@ -95,9 +95,14 @@ export function CustomerListScreen() {
                     {customer.name}
                   </Text>
                   <Text textStyle={{ color: colors.textMuted, fontSize: 14 }}>{customer.phone}</Text>
-                  {customer.address ? (
+                  {customer.townshipOrCity ? (
                     <Text textStyle={{ color: colors.textMuted, fontSize: 13 }} numberOfLines={1}>
-                      {customer.address}
+                      {customer.townshipOrCity}
+                    </Text>
+                  ) : null}
+                  {customer.detailedAddress ? (
+                    <Text textStyle={{ color: colors.textMuted, fontSize: 13 }} numberOfLines={1}>
+                      {customer.detailedAddress}
                     </Text>
                   ) : null}
                 </Column>

@@ -14,7 +14,9 @@ import { useTheme } from '@/theme/ThemeProvider';
 type CustomerFormValues = {
   name: string;
   phone: string;
-  address: string;
+  townshipOrCity: string;
+  detailedAddress: string;
+  addressLabel: string;
   notes: string;
 };
 
@@ -30,7 +32,14 @@ export function CustomerCreateScreen() {
     handleSubmit,
     formState: { errors },
   } = useForm<CustomerFormValues>({
-    defaultValues: { name: '', phone: '', address: '', notes: '' },
+    defaultValues: {
+      name: '',
+      phone: '',
+      townshipOrCity: '',
+      detailedAddress: '',
+      addressLabel: '',
+      notes: '',
+    },
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -39,7 +48,9 @@ export function CustomerCreateScreen() {
       const result = await createCustomer.mutateAsync({
         name: values.name.trim(),
         phone: values.phone.trim(),
-        address: values.address.trim() || undefined,
+        townshipOrCity: values.townshipOrCity.trim() || undefined,
+        detailedAddress: values.detailedAddress.trim() || undefined,
+        addressLabel: values.addressLabel.trim() || undefined,
         notes: values.notes.trim() || undefined,
       });
       router.replace(`/customers/${result.customer.id}`);
@@ -103,11 +114,39 @@ export function CustomerCreateScreen() {
 
             <Controller
               control={control}
-              name="address"
+              name="townshipOrCity"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  testID="customer-address"
-                  placeholder={t('customers.addressOptional')}
+                  testID="customer-township"
+                  placeholder={t('customers.townshipOrCityOptional')}
+                  defaultValue={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="addressLabel"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  testID="customer-address-label"
+                  placeholder={t('customers.addressLabelOptional')}
+                  defaultValue={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                />
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="detailedAddress"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  testID="customer-detailed-address"
+                  placeholder={t('customers.detailedAddressOptional')}
                   defaultValue={value}
                   onChangeText={onChange}
                   onBlur={onBlur}

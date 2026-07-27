@@ -7,6 +7,7 @@ import {
   createCategoryValidators,
   createProductValidators,
   listProductsValidators,
+  updateCategoryValidators,
   updateProductValidators,
 } from './product.validators.js';
 import { validateRequest } from '../../../middleware/validate-request.js';
@@ -76,6 +77,22 @@ export function createCategoryRouter(
     createCategoryValidators,
     validateRequest,
     controller.createCategory,
+  );
+  router.patch(
+    '/:id',
+    authenticate,
+    tenant,
+    updateCategoryValidators,
+    validateRequest,
+    controller.updateCategory,
+  );
+  router.delete(
+    '/:id',
+    authenticate,
+    tenant,
+    param('id').isString().notEmpty(),
+    validateRequest,
+    controller.deleteCategory,
   );
 
   return router;

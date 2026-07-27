@@ -10,6 +10,8 @@ import { CategoryService, ProductService } from './products/product.service.js';
 import { createCategoryRouter, createProductRouter } from './products/product.routes.js';
 import { CustomerService } from './customers/customer.service.js';
 import { createCustomerRouter } from './customers/customer.routes.js';
+import { OrderService } from './orders/order.service.js';
+import { createOrderRouter } from './orders/order.routes.js';
 import { createAuthenticate } from '../../middleware/authenticate.js';
 import { createTenantMiddleware } from '../../middleware/tenant.js';
 import { Router } from 'express';
@@ -30,6 +32,7 @@ export function createV1Router(deps: V1Dependencies): Router {
   const productService = new ProductService(deps.prisma);
   const categoryService = new CategoryService(deps.prisma);
   const customerService = new CustomerService(deps.prisma);
+  const orderService = new OrderService(deps.prisma);
 
   router.use('/health', createHealthRouter());
   router.use('/auth', createAuthRouter(authService, authenticate));
@@ -43,6 +46,7 @@ export function createV1Router(deps: V1Dependencies): Router {
     createCategoryRouter(productService, categoryService, authenticate, tenant),
   );
   router.use('/customers', createCustomerRouter(customerService, authenticate, tenant));
+  router.use('/orders', createOrderRouter(orderService, authenticate, tenant));
 
   return router;
 }

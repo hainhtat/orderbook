@@ -14,7 +14,7 @@ export default function CustomersLayout() {
         headerTintColor: colors.text,
         headerShadowVisible: false,
       }}>
-      <Stack.Screen name="[id]" options={{ title: t('customers.detailTitle') }} />
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
       <Stack.Screen name="new" options={{ title: t('customers.createTitle') }} />
     </Stack>
   );

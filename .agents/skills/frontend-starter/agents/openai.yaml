@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Starter"
+  short_description: "Scaffold a production-ready React SPA"
+  default_prompt: "Use $frontend-starter to scaffold or standardize this application."

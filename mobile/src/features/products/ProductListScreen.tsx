@@ -1,4 +1,4 @@
-import { Text, TextInput } from '@expo/ui';
+import { Button, Text, TextInput } from '@expo/ui';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
@@ -59,6 +59,8 @@ export function ProductListContent() {
           testID="products-empty"
           title={search ? t('products.noResults') : t('products.emptyTitle')}
           description={search ? undefined : t('products.emptyDescription')}
+          actionLabel={search ? undefined : t('products.add')}
+          onAction={search ? undefined : () => router.push('/products/new')}
         />
       </View>
     );
@@ -135,17 +137,27 @@ export function ProductListContent() {
 }
 
 export function ProductListScreen({ showTitle = true }: { showTitle?: boolean }) {
+  const router = useRouter();
   const { t } = useLocale();
   const { colors } = useTheme();
 
   return (
     <Screen testID="products-screen" scroll={false}>
       <View style={styles.screen}>
-        {showTitle ? (
-          <Text textStyle={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>
-            {t('products.title')}
-          </Text>
-        ) : null}
+        <View style={styles.header}>
+          {showTitle ? (
+            <Text textStyle={{ color: colors.text, fontSize: 24, fontWeight: '700' }}>
+              {t('products.title')}
+            </Text>
+          ) : (
+            <View />
+          )}
+          <Button
+            testID="products-add"
+            label={t('products.add')}
+            onPress={() => router.push('/products/new')}
+          />
+        </View>
         <ProductListContent />
       </View>
     </Screen>
@@ -155,6 +167,12 @@ export function ProductListScreen({ showTitle = true }: { showTitle?: boolean })
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    gap: 12,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
   flex: {

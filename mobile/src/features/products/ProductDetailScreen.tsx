@@ -1,19 +1,21 @@
-import { Column, Text } from '@expo/ui';
-import { useLocalSearchParams } from 'expo-router';
+import { Button, Column, Text } from '@expo/ui';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { ErrorState, LoadingState } from '@/components/ListStates';
 import { Screen } from '@/components/Screen';
-import { useProduct } from '@/features/products/use-products';
+import { useArchiveProduct, useProduct } from '@/features/products/use-products';
 import { useLocale } from '@/i18n/LocaleProvider';
 import { useTheme } from '@/theme/ThemeProvider';
 import { formatMMK, isLowStock } from '@/utils/format-mmk';
-import { StyleSheet, View } from 'react-native';
 
 export function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { t } = useLocale();
   const { colors } = useTheme();
   const { data: product, isLoading, isError, error, refetch } = useProduct(id ?? '');
+  const archiveProduct = useArchiveProduct();
 
   if (isLoading) {
     return (
@@ -91,6 +93,40 @@ export function ProductDetailScreen() {
               {t('products.lowStock')}
             </Text>
           </View>
+        ) : null}
+
+        {!product.isArchived ? (
+          <Column spacing={12}>
+            <Button
+              testID="product-edit"
+              label={t('products.edit')}
+              onPress={() => router.push(`/products/${product.id}/edit`)}
+            />
+            <Button
+              testID="product-adjust-stock"
+              label={t('products.adjustStock')}
+              onPress={() => router.push(`/products/${product.id}/adjust-stock`)}
+            />
+            <Button
+              testID="product-archive"
+              label={archiveProduct.isPending ? t('common.loading') : t('products.archive')}
+              onPress={() => {
+                Alert.alert(t('products.archiveTitle'), t('products.archiveConfirm'), [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  {
+                    text: t('products.archive'),
+                    style: 'destructive',
+                    onPress: () => {
+                      void archiveProduct.mutateAsync(product.id).then(() => {
+                        router.replace('/products');
+                      });
+                    },
+                  },
+                ]);
+              }}
+              disabled={archiveProduct.isPending}
+            />
+          </Column>
         ) : null}
       </Column>
     </Screen>

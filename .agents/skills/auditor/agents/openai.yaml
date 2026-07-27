@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Auditor"
+  short_description: "Audit production security and reliability risks"
+  default_prompt: "Use $auditor to audit the completed implementation and write a risk report."

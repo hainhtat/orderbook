@@ -35,9 +35,10 @@ describe('LanguageSwitcher', () => {
         screen.getByRole('heading', { name: /dashboard/i }),
       ).toBeInTheDocument()
     })
+    expect(screen.getByText('Test Shop')).toBeInTheDocument()
+    expect(screen.queryByText('Test Owner')).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /language/i }))
-    await user.click(screen.getByRole('menuitem', { name: /myanmar/i }))
+    await user.click(screen.getByRole('button', { name: /switch to myanmar/i }))
 
     await waitFor(() => {
       expect(

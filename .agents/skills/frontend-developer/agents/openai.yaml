@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Developer"
+  short_description: "Implement Order Notebook web features"
+  default_prompt: "Use $frontend-developer to implement the requested web feature."

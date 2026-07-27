@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/table'
 import {
   CustomerForm,
-  toCustomerPayload,
+  toUpdateCustomerPayload,
 } from '@/features/customers/customer-form'
 import {
   useCustomer,
@@ -29,6 +29,7 @@ import {
 } from '@/features/customers/use-customers'
 import { ApiError } from '@/lib/api-error'
 import { formatMMK } from '@/lib/format-mmk'
+import { BackToListLink } from '@/components/back-to-list-link'
 
 export function CustomerDetailPage() {
   const { t } = useTranslation('features')
@@ -58,9 +59,7 @@ export function CustomerDetailPage() {
           <Button variant="outline" onClick={() => void refetch()}>
             {t('customers.retry')}
           </Button>
-          <Button variant="ghost" asChild>
-            <Link to="/customers">{t('customers.backToList')}</Link>
-          </Button>
+          <BackToListLink to="/customers" label={t('customers.backToList')} />
         </div>
       </div>
     )
@@ -69,9 +68,7 @@ export function CustomerDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
-          <Link to="/customers">{t('customers.backToList')}</Link>
-        </Button>
+        <BackToListLink to="/customers" label={t('customers.backToList')} />
         <h1 className="text-3xl font-semibold tracking-tight">
           {customer.name}
         </h1>
@@ -90,7 +87,7 @@ export function CustomerDetailPage() {
             isSubmitting={updateCustomer.isPending}
             onSubmit={async (values) => {
               try {
-                await updateCustomer.mutateAsync(toCustomerPayload(values))
+                await updateCustomer.mutateAsync(toUpdateCustomerPayload(values))
                 toast.success(t('customers.updated'))
               } catch (error) {
                 if (error instanceof ApiError && error.status === 409) {

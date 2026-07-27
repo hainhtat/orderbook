@@ -6,9 +6,9 @@ export function createCustomerController(customers: CustomerService) {
   return {
     list: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { q } = matchedData(req) as { q?: string };
-        const items = await customers.list(req.shop!.shopId, q);
-        res.json({ customers: items });
+        const { q, page, limit } = matchedData(req) as { q?: string; page?: number; limit?: number };
+        const items = await customers.list(req.shop!.shopId, q, page, limit);
+        res.json({ customers: items.items, pagination: items.pagination });
       } catch (e) {
         next(e);
       }

@@ -2,7 +2,9 @@ export type Customer = {
   id: string;
   name: string;
   phone: string;
-  address: string | null;
+  townshipOrCity: string | null;
+  detailedAddress: string | null;
+  addressLabel: string | null;
   notes: string | null;
 };
 
@@ -22,6 +24,17 @@ export type ListCustomersParams = {
 export type CreateCustomerInput = {
   name: string;
   phone: string;
-  address?: string;
+  townshipOrCity?: string;
+  detailedAddress?: string;
+  addressLabel?: string;
+  notes?: string;
+};
+
+export type UpdateCustomerInput = {
+  name?: string;
+  phone?: string;
+  townshipOrCity?: string | null;
+  detailedAddress?: string | null;
+  addressLabel?: string | null;
   notes?: string;
 };

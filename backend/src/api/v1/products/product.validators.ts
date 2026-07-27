@@ -29,9 +29,20 @@ export const adjustStockValidators = [
 
 export const listProductsValidators = [
   query('includeArchived').optional().isBoolean().toBoolean(),
+  query('q').optional().trim().isString(),
+  query('categoryId').optional().isString(),
+  query('lowStock').optional().isBoolean().toBoolean(),
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
 ];
 
 export const createCategoryValidators = [
   body('name').trim().notEmpty().withMessage('REQUIRED'),
+  body('sortOrder').optional().isInt(),
+];
+
+export const updateCategoryValidators = [
+  param('id').isString().notEmpty(),
+  body('name').optional().trim().notEmpty(),
   body('sortOrder').optional().isInt(),
 ];

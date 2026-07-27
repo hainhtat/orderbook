@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -24,6 +24,7 @@ import {
 } from '@/features/products/use-products'
 import { ApiError } from '@/lib/api-error'
 import { formatMMK, isLowStock } from '@/lib/format-mmk'
+import { BackToListLink } from '@/components/back-to-list-link'
 
 export function ProductDetailPage() {
   const { t } = useTranslation('features')
@@ -52,9 +53,7 @@ export function ProductDetailPage() {
           <Button variant="outline" onClick={() => void refetch()}>
             {t('products.retry')}
           </Button>
-          <Button variant="ghost" asChild>
-            <Link to="/products">{t('products.backToList')}</Link>
-          </Button>
+          <BackToListLink to="/products" label={t('products.backToList')} />
         </div>
       </div>
     )
@@ -63,9 +62,7 @@ export function ProductDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
-          <Link to="/products">{t('products.backToList')}</Link>
-        </Button>
+        <BackToListLink to="/products" label={t('products.backToList')} />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">

@@ -6,10 +6,11 @@ import type {
   UpdateCustomerInput,
 } from '@/features/customers/types'
 
-export function fetchCustomers(search?: string) {
-  const params = search?.trim() ? `?q=${encodeURIComponent(search.trim())}` : ''
-  return apiRequest<{ customers: Customer[] }>(`/customers${params}`).then(
-    (data) => data.customers,
+export function fetchCustomers(search?: string, page = 1, limit = 20) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) })
+  if (search?.trim()) params.set('q', search.trim())
+  return apiRequest<{ customers: Customer[]; pagination?: { page: number; limit: number; total: number; totalPages: number } }>(`/customers?${params}`).then(
+    (data) => Object.assign(data.customers, { pagination: data.pagination }),
   )
 }
 

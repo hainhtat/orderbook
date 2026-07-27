@@ -17,7 +17,12 @@ You are the **primary orchestrator** for the **Order Notebook** application (mul
 | **Mobile** (`mobile/`) | React Native, Expo, Expo Router, Expo UI |
 | **AI assistant** | DeepSeek (`deepseek-chat`) via OpenAI-compatible API; per-shop BYOK in production |
 
-Follow conventions in `.cursor/skills/` (frontend-starter, backend-starter, mobile-starter).
+Follow conventions in `.cursor/skills/` (frontend-starter, backend-starter, mobile-starter, test).
+
+### Skill usage
+
+- Use `frontend-starter`, `backend-starter`, and `mobile-starter` when scaffolding or standardizing the corresponding app.
+- Use `test` when implementing or reviewing behavior that needs a small, high-value set of focused tests. Prefer it for regressions, critical business logic, public APIs, and edge cases; avoid exhaustive or low-value coverage.
 
 ## 3. Subagent routing (`.cursor/agents/`)
 

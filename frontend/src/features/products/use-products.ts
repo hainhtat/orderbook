@@ -16,10 +16,10 @@ import type {
   UpdateProductInput,
 } from '@/features/products/types'
 
-export function useProducts(includeArchived = false) {
+export function useProducts(includeArchived = false, page = 1, limit = 20) {
   return useQuery({
-    queryKey: productKeys.list(includeArchived),
-    queryFn: () => fetchProducts(includeArchived),
+    queryKey: [...productKeys.list(includeArchived), page, limit],
+    queryFn: () => fetchProducts(includeArchived, page, limit),
   })
 }
 

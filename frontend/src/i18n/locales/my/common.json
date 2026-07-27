@@ -10,10 +10,15 @@
   "themeDark": "အမှောင်",
   "english": "အင်္ဂလိပ်",
   "myanmar": "မြန်မာ",
+  "switchToEnglish": "အင်္ဂလိပ်ဘာသာသို့ ပြောင်းမည်",
+  "switchToMyanmar": "မြန်မာဘာသာသို့ ပြောင်းမည်",
+  "switchToLightTheme": "အလင်းအပြင်အဆင်သို့ ပြောင်းမည်",
+  "switchToDarkTheme": "အမှောင်အပြင်အဆင်သို့ ပြောင်းမည်",
   "nav": {
     "dashboard": "ဒက်ရှ်ဘုတ်",
     "products": "ကုန်ပစ္စည်းများ",
     "customers": "ဖောက်သည်များ",
+    "orders": "အော်ဒါများ",
     "settings": "ဆက်တင်များ"
   },
   "errors": {

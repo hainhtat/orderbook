@@ -473,7 +473,7 @@
       <section id="s1">
         <h2>1. Project overview</h2>
         <p>Order Notebook is a <strong>multi-tenant SaaS</strong> platform for Myanmar SMBs that sell through messenger and social channels. Staff record orders on behalf of customers, track inventory, manage CRM, monitor sales, and fulfill <strong>advance/pre-orders</strong> with deposit and balance collection.</p>
-        <p>The product is <strong>staff-only</strong> in v1 — no customer portal or storefront. Owners use <strong>web</strong> and <strong>mobile</strong> apps against a shared versioned API.</p>
+        <p>The product is <strong>staff-only</strong> in v1 — no customer portal or storefront. The <strong>web console is the active priority</strong>; mobile implementation is deferred to a later phase while the shared versioned API remains reusable.</p>
         <p>The <strong>AI order-drafting assistant</strong> turns messenger-style text into structured drafts (customer, line items, qty, notes) for human review. Each shop uses its own LLM API key (<strong>BYOK</strong>).</p>
 
         <h3>1.1 Problem statement</h3>
@@ -496,7 +496,7 @@
             <tr><td>Inventory</td><td>Simple catalog (SKU, price, qty, category, image)</td></tr>
             <tr><td>CRM</td><td>Basic: name, phone, address, notes, history</td></tr>
             <tr><td>AI</td><td>Order drafting; BYOK; human confirmation required</td></tr>
-            <tr><td>Clients</td><td>Web + mobile in parallel</td></tr>
+            <tr><td>Clients</td><td>Web-first; mobile deferred to later phases</td></tr>
             <tr><td>Layout</td><td>Independent <code>frontend/</code>, <code>backend/</code>, <code>mobile/</code></td></tr>
           </tbody>
         </table>
@@ -513,7 +513,7 @@
           <li>Single customer view: contact, notes, order history.</li>
           <li>Actionable sales and pre-order pipeline reports.</li>
           <li>Faster entry via AI drafts (always human-confirmed).</li>
-          <li>Equivalent core workflows on web and mobile, Myanmar-first bilingual.</li>
+          <li>Core workflows on a mobile-first responsive web console; mobile parity later.</li>
         </ol>
         <h3>2.2 Success measures</h3>
         <ul>
@@ -539,7 +539,8 @@
               <li>Standard + pre-orders, payments, search/filters</li>
               <li>AI BYOK chat → draft → confirm</li>
               <li>Reports MVP + CSV export</li>
-              <li>Web staff console + Expo mobile app</li>
+              <li>Mobile-first responsive web staff console</li>
+              <li>Expo mobile app deferred to a later phase</li>
               <li>REST <code>/api/v1</code>, Prisma, tests</li>
             </ul>
           </div>
@@ -605,9 +606,9 @@
         <table>
           <thead><tr><th>Area</th><th>Key IDs</th><th>Summary</th></tr></thead>
           <tbody>
-            <tr><td>Catalog</td><td>CAT-01–05</td><td>CRUD, search, archive, stock adjust, no oversell by default</td></tr>
-            <tr><td>CRM</td><td>CRM-01–03</td><td>Name, phone, address, notes; duplicate phone warn; history</td></tr>
-            <tr><td>Orders</td><td>ORD-01–06</td><td>Messenger channel, payments, DRAFT→CONFIRMED→COMPLETED</td></tr>
+            <tr><td>Catalog</td><td>CAT-01–07</td><td>CRUD, stock availability, and delivered-sales summaries for compact product cards</td></tr>
+            <tr><td>CRM</td><td>CRM-01–05</td><td>Name, phone, address, notes, history, and latest-order card summary</td></tr>
+            <tr><td>Orders</td><td>ORD-01–07</td><td>Save directly to TO_DELIVER; then DELIVERED or CANCELLED; payment tracked separately</td></tr>
           </tbody>
         </table>
 
@@ -679,8 +680,12 @@ Order ── optional ── ChatSession</code></pre>
           <span class="flow-step">STANDARD</span>
           <span class="flow-step">PREORDER</span>
           <span class="flow-arrow">·</span>
-          <span class="flow-step">DRAFT</span>
+          <span class="flow-step">TO_DELIVER</span>
           <span class="flow-arrow">→</span>
+          <span class="flow-step">DELIVERED</span>
+          <span class="flow-arrow">·</span>
+          <span class="flow-step">COD = UNPAID until collected</span>
+          <span class="flow-arrow">·</span>
           <span class="flow-step">CONFIRMED</span>
           <span class="flow-arrow">→</span>
           <span class="flow-step">DEPOSIT_PAID</span>
@@ -721,6 +726,9 @@ Order ── optional ── ChatSession</code></pre>
         <h3>Design principles</h3>
         <ul>
           <li>Messenger-first: chat → structured receipt</li>
+          <li>Cart-first checkout: add products first; keep required customer selection compact and reveal delivery/advanced fields contextually</li>
+          <li>Direct one-click language/theme toggles; prominent icon-labelled back links</li>
+          <li>Pre-order checkbox reveals fulfillment date; header displays active shop name</li>
           <li>Confirm before commit (AI, payments, stock)</li>
           <li>Bilingual parity; light/dark themes</li>
         </ul>
@@ -745,6 +753,13 @@ Settings
           </div>
         </div>
 
+        <h3>Standard-order fulfillment lifecycle</h3>
+        <div class="flow">
+          <span class="flow-step">TO_DELIVER</span><span class="flow-arrow">→</span>
+          <span class="flow-step">DELIVERED</span>
+        </div>
+        <p>Saving a standard order deducts stock immediately. COD stays unpaid until collection is recorded; marking an unpaid COD order delivered prompts payment entry. Cancelling before delivery restores stock.</p>
+
         <h3 id="s9-preorder-flow">Pre-order fulfillment lifecycle</h3>
         <div class="flow" style="flex-direction:column; align-items:stretch;">
           <div><strong>1.</strong> Create pre-order — customer, items, expected date, required deposit</div>
@@ -760,7 +775,7 @@ Settings
           <li>Paste messenger text or describe order</li>
           <li>Backend returns editable <code>OrderDraft</code></li>
           <li>Staff edits customer/items/qty</li>
-          <li><strong>Confirm</strong> persists order (default <code>DRAFT</code>)</li>
+          <li><strong>Confirm</strong> persists the order into its operational initial status</li>
         </ol>
       </section>
 
@@ -777,7 +792,7 @@ Settings
           <tbody>
             <tr><td>Backend</td><td>Routes → Controllers → Services → Repositories (Prisma)</td></tr>
             <tr><td>Frontend</td><td><code>features/</code> + React Query + shadcn/ui</td></tr>
-            <tr><td>Mobile</td><td>Expo Router + Expo UI; mirror feature domains</td></tr>
+            <tr><td>Mobile</td><td>Deferred later phase; Expo Router + Expo UI will reuse API/domain contracts</td></tr>
             <tr><td>AI</td><td>BYOK decrypt → bounded catalog context → LLM JSON → validate → draft only until /confirm</td></tr>
           </tbody>
         </table>
@@ -785,14 +800,14 @@ Settings
 
       <!-- Section 11 -->
       <section id="s11">
-        <h2>11. Implementation milestones (~13 weeks)</h2>
+        <h2>11. Implementation milestones (web-first)</h2>
 
         <div class="milestone">
           <div class="week">M0<br>W1–2</div>
           <div>
             <h4>Foundation</h4>
-            <p>Scaffold all three apps; JWT; shop registration; tenant middleware; CI.</p>
-            <div class="exit"><strong>Exit:</strong> Owner registers, creates shop, logs in on web + mobile.</div>
+            <p>Scaffold web and backend; JWT; shop registration; tenant middleware; CI.</p>
+            <div class="exit"><strong>Exit:</strong> Owner registers, creates shop, and logs in on the responsive web console.</div>
           </div>
         </div>
         <div class="milestone">
@@ -800,7 +815,7 @@ Settings
           <div>
             <h4>Catalog & customers</h4>
             <p>Product/category CRUD, images, customer CRUD, stock adjustments.</p>
-            <div class="exit"><strong>Exit:</strong> Full catalog + CRM on web and mobile.</div>
+            <div class="exit"><strong>Exit:</strong> Full catalog + CRM on the responsive web console.</div>
           </div>
         </div>
         <div class="milestone">
@@ -843,6 +858,20 @@ Settings
             <div class="exit"><strong>Exit:</strong> Daily use without critical defects; tenant isolation verified.</div>
           </div>
         </div>
+        <div class="milestone">
+          <div class="week">LATER</div>
+          <div>
+            <h4>Mobile client parity (deferred)</h4>
+            <p>Resume Expo implementation after web-first milestones and pilot validation, reusing the versioned API and domain contracts.</p>
+          </div>
+        </div>
+        <div class="milestone">
+          <div class="week">LATER</div>
+          <div>
+            <h4>Receipt printing</h4>
+            <p>Add a browser-printable order receipt after print targets and receipt dimensions are confirmed.</p>
+          </div>
+        </div>
       </section>
 
       <!-- Section 12 & 13 -->
@@ -855,6 +884,8 @@ Settings
             <tr><td>Extra channels</td><td>Messenger primary; PHONE/IN_PERSON tags supported</td></tr>
             <tr><td>Staff roles</td><td>Owner only v1; enum extensible</td></tr>
             <tr><td>Order numbers</td><td><code>{PREFIX}-{YYYY}-{SEQ}</code> server-side</td></tr>
+            <tr><td>Mobile delivery</td><td>Deferred until after web-first milestones and pilot validation</td></tr>
+            <tr><td>Receipt printing</td><td>Deferred; browser print layout and receipt size remain to be confirmed</td></tr>
           </tbody>
         </table>
       </section>

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backend Starter"
+  short_description: "Scaffold a production-ready Express API"
+  default_prompt: "Use $backend-starter to scaffold or standardize this application."

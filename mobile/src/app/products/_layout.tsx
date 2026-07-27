@@ -15,7 +15,8 @@ export default function ProductsLayout() {
         headerShadowVisible: false,
       }}>
       <Stack.Screen name="index" options={{ title: t('products.title') }} />
-      <Stack.Screen name="[id]" options={{ title: t('products.detailTitle') }} />
+      <Stack.Screen name="new" options={{ title: t('products.createTitle') }} />
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

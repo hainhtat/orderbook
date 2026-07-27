@@ -5,6 +5,7 @@ import type {
   Customer,
   CustomerOrderSummary,
   ListCustomersParams,
+  UpdateCustomerInput,
 } from './customer-types';
 
 export const customerApi = {
@@ -23,6 +24,10 @@ export const customerApi = {
 
   create(input: CreateCustomerInput): Promise<{ customer: Customer }> {
     return apiRequest('/customers', { method: 'POST', body: input });
+  },
+
+  update(id: string, input: UpdateCustomerInput): Promise<{ customer: Customer }> {
+    return apiRequest(`/customers/${id}`, { method: 'PATCH', body: input });
   },
 
   getOrders(id: string): Promise<{ orders: CustomerOrderSummary[] }> {

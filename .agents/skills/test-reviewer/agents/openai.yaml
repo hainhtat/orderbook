@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Reviewer"
+  short_description: "Review and add essential tests only"
+  default_prompt: "Use $test-reviewer to independently review coverage and add only essential tests."

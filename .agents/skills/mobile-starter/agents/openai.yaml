@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Starter"
+  short_description: "Scaffold a production-ready Expo app"
+  default_prompt: "Use $mobile-starter to scaffold or standardize this application."

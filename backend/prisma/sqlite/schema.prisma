@@ -25,6 +25,10 @@ enum OrderType {
 enum OrderStatus {
   DRAFT
   CONFIRMED
+  TO_CONFIRM
+  TO_DELIVER
+  DELIVERING
+  DELIVERED
   DEPOSIT_PAID
   RESERVED
   AWAITING_STOCK
@@ -36,6 +40,7 @@ enum OrderStatus {
 
 enum PaymentMethod {
   CASH
+  COD
   BANK_TRANSFER
   KBZPAY_MANUAL
   WAVE_MANUAL
@@ -134,14 +139,16 @@ model Product {
 }
 
 model Customer {
-  id      String  @id @default(cuid())
-  shopId  String
-  name    String
-  phone   String
-  address String?
-  notes   String?
-  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  orders  Order[]
+  id              String  @id @default(cuid())
+  shopId          String
+  name            String
+  phone           String
+  townshipOrCity  String?
+  detailedAddress String?
+  addressLabel    String?
+  notes           String?
+  shop            Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orders          Order[]
 
   @@unique([shopId, phone])
 }
@@ -152,7 +159,8 @@ model Order {
   customerId        String
   orderNumber       String
   type              OrderType            @default(STANDARD)
-  status            OrderStatus          @default(DRAFT)
+  status            OrderStatus          @default(TO_DELIVER)
+  paymentMethod     PaymentMethod?
   channel           OrderChannel         @default(MESSENGER)
   channelReference  String?
   subtotalMMK       Int
@@ -161,6 +169,11 @@ model Order {
   amountPaidMMK     Int                  @default(0)
   expectedFulfillAt DateTime?
   notes             String?
+  customerName      String
+  customerPhone     String
+  townshipOrCity    String
+  detailedAddress   String
+  addressLabel      String?
   chatSessionId     String?
   createdByUserId   String
   createdAt         DateTime             @default(now())

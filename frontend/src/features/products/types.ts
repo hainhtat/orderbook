@@ -11,6 +11,8 @@ export type Product = {
   priceMMK: number
   stockQty: number
   reservedQty: number
+  soldQuantity: number
+  salesRevenueMMK: number
   lowStockAt: number | null
   imageUrl: string | null
   isArchived: boolean

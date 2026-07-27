@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -16,6 +15,7 @@ import {
 } from '@/features/products/product-form'
 import { useCreateProduct } from '@/features/products/use-products'
 import { ApiError } from '@/lib/api-error'
+import { BackToListLink } from '@/components/back-to-list-link'
 
 export function ProductCreatePage() {
   const { t } = useTranslation('features')
@@ -26,9 +26,7 @@ export function ProductCreatePage() {
   return (
     <div className="space-y-6">
       <div>
-        <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
-          <Link to="/products">{t('products.backToList')}</Link>
-        </Button>
+        <BackToListLink to="/products" label={t('products.backToList')} />
         <h1 className="text-3xl font-semibold tracking-tight">
           {t('products.createTitle')}
         </h1>

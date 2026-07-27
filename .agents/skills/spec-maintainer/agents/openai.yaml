@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spec Maintainer"
+  short_description: "Synchronize the project spec with evidence"
+  default_prompt: "Use $spec-maintainer to audit repository evidence and synchronize the project spec."

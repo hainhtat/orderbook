@@ -1,0 +1,4 @@
+interface:
+  display_name: "Backend Developer"
+  short_description: "Implement Order Notebook backend features"
+  default_prompt: "Use $backend-developer to implement the requested backend feature."

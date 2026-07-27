@@ -22,7 +22,7 @@ export function DashboardPage() {
         </p>
       </div>
 
-      <Card>
+      <Card className="rounded-3xl border-0 bg-card shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <LayoutDashboard className="h-5 w-5 text-muted-foreground" />

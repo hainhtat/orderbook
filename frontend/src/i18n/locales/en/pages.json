@@ -1,0 +1,25 @@
+{
+  "dashboard": {
+    "title": "Dashboard",
+    "description": "Today's sales snapshot and shop activity will appear here.",
+    "emptyTitle": "Welcome to Order Notebook",
+    "emptyDescription": "Your dashboard is ready. Orders, pre-orders, and stock alerts will show up here in upcoming milestones."
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your shop profile and preferences.",
+    "shopSection": "Shop profile",
+    "shopName": "Shop name",
+    "shopSlug": "Slug",
+    "shopPhone": "Phone",
+    "shopAddress": "Address",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Shop profile updated."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you requested does not exist.",
+    "back": "Go to dashboard"
+  }
+}

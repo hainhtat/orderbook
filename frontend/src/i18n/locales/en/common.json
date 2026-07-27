@@ -1,0 +1,22 @@
+{
+  "appName": "Order Notebook",
+  "loading": "Loading…",
+  "save": "Save",
+  "cancel": "Cancel",
+  "logout": "Log out",
+  "language": "Language",
+  "theme": "Theme",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "english": "English",
+  "myanmar": "Myanmar",
+  "nav": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "customers": "Customers",
+    "settings": "Settings"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  }
+}

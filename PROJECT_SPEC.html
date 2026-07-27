@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Notebook App — Project Specification</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --success: #059669;
+      --success-soft: #d1fae5;
+      --warning: #d97706;
+      --warning-soft: #fef3c7;
+      --danger: #dc2626;
+      --danger-soft: #fee2e2;
+      --purple: #7c3aed;
+      --purple-soft: #ede9fe;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 8px 24px rgba(15, 23, 42, 0.06);
+      --font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+      --sidebar: 280px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.25rem 1rem 2rem;
+    }
+
+    .sidebar h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    .sidebar h2:first-child { margin-top: 0; }
+
+    .sidebar a {
+      display: block;
+      padding: 0.35rem 0.6rem;
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.88rem;
+    }
+
+    .sidebar a:hover { background: var(--surface-2); color: var(--accent); }
+    .sidebar a.sub { padding-left: 1.25rem; color: var(--muted); font-size: 0.82rem; }
+
+    .brand {
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+    }
+
+    .brand .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand .meta {
+      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    main {
+      padding: 2rem 2.5rem 4rem;
+      max-width: 1100px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+      color: #fff;
+      border-radius: calc(var(--radius) + 4px);
+      padding: 2rem 2.25rem;
+      margin-bottom: 1.75rem;
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 0.5rem;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 62ch;
+      opacity: 0.92;
+      font-size: 1.02rem;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .card .value {
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    .card.accent { border-color: #bfdbfe; background: linear-gradient(180deg, #eff6ff, #fff); }
+    .card.success { border-color: #a7f3d0; background: linear-gradient(180deg, #ecfdf5, #fff); }
+    .card.warning { border-color: #fde68a; background: linear-gradient(180deg, #fffbeb, #fff); }
+    .card.purple { border-color: #ddd6fe; background: linear-gradient(180deg, #f5f3ff, #fff); }
+
+    section {
+      margin-bottom: 2.5rem;
+      scroll-margin-top: 1.5rem;
+    }
+
+    section > h2 {
+      font-size: 1.45rem;
+      margin: 0 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent-soft);
+      letter-spacing: -0.02em;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin: 1.5rem 0 0.75rem;
+      color: #1e293b;
+    }
+
+    h4 {
+      font-size: 0.95rem;
+      margin: 1.25rem 0 0.5rem;
+      color: #334155;
+    }
+
+    p { margin: 0 0 0.85rem; }
+
+    ul, ol { margin: 0 0 1rem; padding-left: 1.35rem; }
+    li { margin-bottom: 0.35rem; }
+
+    strong { font-weight: 650; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1.25rem;
+      font-size: 0.88rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    th, td {
+      padding: 0.65rem 0.85rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-2);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafbfc; }
+
+    .yes { color: var(--success); font-weight: 700; }
+    .no { color: #94a3b8; }
+    .req-id {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    pre, code {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 1rem 1.15rem;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin: 0.75rem 0 1.25rem;
+      line-height: 1.5;
+    }
+
+    code {
+      background: #f1f5f9;
+      color: #be123c;
+      padding: 0.12rem 0.35rem;
+      border-radius: 5px;
+      font-size: 0.84em;
+    }
+
+    pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .scope-in { border-left: 4px solid var(--success); }
+    .scope-out { border-left: 4px solid var(--danger); }
+    .scope-future { border-left: 4px solid var(--purple); }
+
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      margin: 1rem 0 1.25rem;
+      padding: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .flow-step {
+      background: var(--accent-soft);
+      color: #1d4ed8;
+      padding: 0.45rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+
+    .flow-arrow { color: var(--muted); font-weight: 700; }
+
+    .milestone {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 1rem 1.15rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .milestone .week {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      padding-top: 0.15rem;
+    }
+
+    .milestone h4 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .milestone p { margin: 0; font-size: 0.88rem; color: var(--muted); }
+    .milestone .exit {
+      margin-top: 0.6rem;
+      font-size: 0.84rem;
+      color: #334155;
+    }
+
+    .stack-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.5rem 0 1rem;
+    }
+
+    .pill {
+      padding: 0.28rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: #334155;
+    }
+
+    .pill.web { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+    .pill.api { background: #d1fae5; border-color: #6ee7b7; color: #047857; }
+    .pill.mobile { background: #ede9fe; border-color: #c4b5fd; color: #6d28d9; }
+
+    .footnote {
+      margin-top: 2rem;
+      padding: 1rem 1.15rem;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      color: var(--muted);
+      border: 1px dashed var(--border);
+    }
+
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        position: relative;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      main { padding: 1.25rem; }
+      .two-col { grid-template-columns: 1fr; }
+      .hero h1 { font-size: 1.55rem; }
+    }
+
+    @media print {
+      .sidebar { display: none; }
+      .layout { display: block; }
+      main { max-width: none; padding: 0; }
+      .hero { background: #1e3a8a; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav class="sidebar" aria-label="Table of contents">
+      <div class="brand">
+        <div class="logo">Order Notebook</div>
+        <div class="meta">Spec v1.0 · 2026-07-27 · Myanmar-first</div>
+      </div>
+
+      <h2>Overview</h2>
+      <a href="#hero">At a glance</a>
+      <a href="#s1">1. Project overview</a>
+      <a href="#s2">2. Goals</a>
+      <a href="#s3">3. Scope</a>
+
+      <h2>Product</h2>
+      <a href="#s4">4. Roles & permissions</a>
+      <a href="#s5">5. Functional requirements</a>
+      <a class="sub" href="#s5-onb">Onboarding</a>
+      <a class="sub" href="#s5-pre">Pre-orders</a>
+      <a class="sub" href="#s5-ai">AI assistant</a>
+      <a href="#s6">6. Non-functional</a>
+
+      <h2>Technical</h2>
+      <a href="#s7">7. Data model</a>
+      <a href="#s8">8. API routes</a>
+      <a href="#s9">9. UI/UX & workflows</a>
+      <a class="sub" href="#s9-preorder-flow">Pre-order lifecycle</a>
+      <a href="#s10">10. Architecture</a>
+      <a href="#s11">11. Milestones</a>
+      <a href="#s12">12. Open items</a>
+      <a href="#s13">13. Glossary</a>
+    </nav>
+
+    <main>
+      <header class="hero" id="hero">
+        <h1>Order Notebook App</h1>
+        <p>Multi-tenant SaaS shop management for Myanmar businesses selling through Messenger — orders, pre-orders with deposits, inventory, CRM, reporting, and an AI order-drafting assistant (BYOK).</p>
+        <div class="badges">
+          <span class="badge">Staff-only v1</span>
+          <span class="badge">MMK only</span>
+          <span class="badge">EN + Myanmar</span>
+          <span class="badge">Web + Mobile</span>
+          <span class="badge">JWT auth</span>
+          <span class="badge">Pending stakeholder review</span>
+        </div>
+      </header>
+
+      <div class="overview-grid">
+        <div class="card accent">
+          <div class="label">Product type</div>
+          <div class="value">Multi-tenant SaaS</div>
+        </div>
+        <div class="card success">
+          <div class="label">Pre-order model</div>
+          <div class="value">Deposit → reserve → fulfill → balance</div>
+        </div>
+        <div class="card warning">
+          <div class="label">Primary channel</div>
+          <div class="value">Messenger / social</div>
+        </div>
+        <div class="card purple">
+          <div class="label">AI (v1)</div>
+          <div class="value">Draft orders · BYOK · human confirm</div>
+        </div>
+      </div>
+
+      <div class="stack-pills">
+        <span class="pill web">React · Vite · shadcn/ui</span>
+        <span class="pill api">Express · Prisma · PostgreSQL</span>
+        <span class="pill mobile">Expo · Expo Router · Expo UI</span>
+      </div>
+
+      <!-- Section 1 -->
+      <section id="s1">
+        <h2>1. Project overview</h2>
+        <p>Order Notebook is a <strong>multi-tenant SaaS</strong> platform for Myanmar SMBs that sell through messenger and social channels. Staff record orders on behalf of customers, track inventory, manage CRM, monitor sales, and fulfill <strong>advance/pre-orders</strong> with deposit and balance collection.</p>
+        <p>The product is <strong>staff-only</strong> in v1 — no customer portal or storefront. Owners use <strong>web</strong> and <strong>mobile</strong> apps against a shared versioned API.</p>
+        <p>The <strong>AI order-drafting assistant</strong> turns messenger-style text into structured drafts (customer, line items, qty, notes) for human review. Each shop uses its own LLM API key (<strong>BYOK</strong>).</p>
+
+        <h3>1.1 Problem statement</h3>
+        <p>Myanmar shops track orders in notebooks, spreadsheets, and chat threads. Deposits, partial payments, reservations, and fulfillment dates get lost. Order Notebook centralizes this in a bilingual system aligned with messenger-led sales.</p>
+
+        <h3>1.2 Product decisions</h3>
+        <table>
+          <thead><tr><th>Decision</th><th>Approved outcome</th></tr></thead>
+          <tbody>
+            <tr><td>Product type</td><td>Multi-tenant SaaS shop management</td></tr>
+            <tr><td>Primary users</td><td>Shop owners (v1 single role per shop)</td></tr>
+            <tr><td>End customers</td><td>Not system users; staff enter orders</td></tr>
+            <tr><td>Tenancy</td><td>Many shops; strict tenant isolation</td></tr>
+            <tr><td>Onboarding</td><td>Self-serve signup</td></tr>
+            <tr><td>Platform admin</td><td>Minimal internal ops (not for shop owners)</td></tr>
+            <tr><td>Currency</td><td>MMK only</td></tr>
+            <tr><td>Locales</td><td>English + Myanmar; EN fallback</td></tr>
+            <tr><td>Pre-order model</td><td>Deposit → reserve → fulfill → balance</td></tr>
+            <tr><td>Payments</td><td>Manual recording; partial payments & deposits</td></tr>
+            <tr><td>Inventory</td><td>Simple catalog (SKU, price, qty, category, image)</td></tr>
+            <tr><td>CRM</td><td>Basic: name, phone, address, notes, history</td></tr>
+            <tr><td>AI</td><td>Order drafting; BYOK; human confirmation required</td></tr>
+            <tr><td>Clients</td><td>Web + mobile in parallel</td></tr>
+            <tr><td>Layout</td><td>Independent <code>frontend/</code>, <code>backend/</code>, <code>mobile/</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Section 2 -->
+      <section id="s2">
+        <h2>2. Goals and success measures</h2>
+        <h3>2.1 Goals</h3>
+        <ol>
+          <li>Register and record first messenger order in under 15 minutes.</li>
+          <li>Reduce lost pre-orders via deposit → reserve → fulfill → balance workflow.</li>
+          <li>Accurate simple-catalog stock without ERP complexity.</li>
+          <li>Single customer view: contact, notes, order history.</li>
+          <li>Actionable sales and pre-order pipeline reports.</li>
+          <li>Faster entry via AI drafts (always human-confirmed).</li>
+          <li>Equivalent core workflows on web and mobile, Myanmar-first bilingual.</li>
+        </ol>
+        <h3>2.2 Success measures</h3>
+        <ul>
+          <li>Shop activation rate (signup → product → order) within 7 days</li>
+          <li>Median order creation time (with/without AI)</li>
+          <li>Pre-order SLA adherence</li>
+          <li>Deposit/balance reconciliation errors</li>
+          <li>AI draft acceptance rate</li>
+          <li>Weekly active shops; API p95 latency; tenant isolation security</li>
+        </ul>
+      </section>
+
+      <!-- Section 3 -->
+      <section id="s3">
+        <h2>3. Scope</h2>
+        <div class="two-col">
+          <div class="card scope-in">
+            <h3>3.1 In scope (v1)</h3>
+            <ul>
+              <li>Self-serve auth, shop creation, tenant isolation</li>
+              <li>Products, categories, stock adjustments, reservations</li>
+              <li>Customers (CRM basic)</li>
+              <li>Standard + pre-orders, payments, search/filters</li>
+              <li>AI BYOK chat → draft → confirm</li>
+              <li>Reports MVP + CSV export</li>
+              <li>Web staff console + Expo mobile app</li>
+              <li>REST <code>/api/v1</code>, Prisma, tests</li>
+            </ul>
+          </div>
+          <div class="card scope-out">
+            <h3>3.2 Out of scope (v1)</h3>
+            <ul>
+              <li>Customer portal, storefront, payment gateway</li>
+              <li>Multi-currency, variants, multi-location stock</li>
+              <li>Extra staff roles (RBAC-ready only)</li>
+              <li>SMS/push, shipping carriers, offline sync</li>
+              <li>AI auto-commit without human review</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card scope-future" style="margin-top:1rem;">
+          <h3>3.3 Future</h3>
+          <p style="margin:0;">Staff roles, branches, notifications, payment gateway, suppliers, platform billing, advanced CRM, offline mobile queue.</p>
+        </div>
+      </section>
+
+      <!-- Section 4 -->
+      <section id="s4">
+        <h2>4. Users, roles & permissions</h2>
+        <h3>Roles</h3>
+        <ul>
+          <li><strong>Platform operator</strong> — internal ops: list/suspend shops, redacted support metadata</li>
+          <li><strong>Shop owner</strong> — v1 sole shop role: full tenant access including AI BYOK</li>
+          <li><strong>System</strong> — tenant isolation, JWT, stock rules, audit</li>
+        </ul>
+        <h3>Permission matrix (v1)</h3>
+        <table>
+          <thead>
+            <tr><th>Capability</th><th>Owner</th><th>Platform ops</th><th>System</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Register / create shop</td><td class="yes">Yes</td><td class="no">No</td><td>Provision</td></tr>
+            <tr><td>Products, customers, orders</td><td class="yes">Yes</td><td class="no">No</td><td>Enforce</td></tr>
+            <tr><td>Reports & AI BYOK</td><td class="yes">Yes</td><td class="no">No</td><td>Encrypt</td></tr>
+            <tr><td>Suspend shop</td><td class="no">No</td><td class="yes">Yes</td><td>—</td></tr>
+            <tr><td>Cross-tenant data</td><td class="no">No</td><td>Redacted</td><td>Audit</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Auth:</strong> JWT access + refresh; <code>tenantId</code> / <code>shopId</code> claims; registration → create shop → <code>ShopMember</code> role <code>OWNER</code>.</p>
+      </section>
+
+      <!-- Section 5 -->
+      <section id="s5">
+        <h2>5. Functional requirements</h2>
+
+        <h3 id="s5-onb">5.1 Shop onboarding</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+          <tbody>
+            <tr><td class="req-id">ONB-01</td><td>Register with email and password</td></tr>
+            <tr><td class="req-id">ONB-02</td><td>Create shop (name, optional phone/address)</td></tr>
+            <tr><td class="req-id">ONB-03</td><td>Unique internal <code>slug</code></td></tr>
+            <tr><td class="req-id">ONB-04</td><td>Onboarding checklist: product → customer → order</td></tr>
+            <tr><td class="req-id">ONB-05</td><td>Shop settings and MMK display preferences</td></tr>
+          </tbody>
+        </table>
+
+        <h3>5.2–5.4 Catalog, CRM, standard orders</h3>
+        <table>
+          <thead><tr><th>Area</th><th>Key IDs</th><th>Summary</th></tr></thead>
+          <tbody>
+            <tr><td>Catalog</td><td>CAT-01–05</td><td>CRUD, search, archive, stock adjust, no oversell by default</td></tr>
+            <tr><td>CRM</td><td>CRM-01–03</td><td>Name, phone, address, notes; duplicate phone warn; history</td></tr>
+            <tr><td>Orders</td><td>ORD-01–06</td><td>Messenger channel, payments, DRAFT→CONFIRMED→COMPLETED</td></tr>
+          </tbody>
+        </table>
+
+        <h3 id="s5-pre">5.5 Pre-orders</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+          <tbody>
+            <tr><td class="req-id">PRE-01</td><td>Type <code>PREORDER</code>; optional expected fulfill date</td></tr>
+            <tr><td class="req-id">PRE-02</td><td>Deposit required (min % configurable, default 30%)</td></tr>
+            <tr><td class="req-id">PRE-03</td><td>On deposit → <code>DEPOSIT_PAID</code>; reserve stock</td></tr>
+            <tr><td class="req-id">PRE-04–05</td><td><code>RESERVED</code> / <code>AWAITING_STOCK</code> / <code>READY_TO_FULFILL</code></td></tr>
+            <tr><td class="req-id">PRE-06–07</td><td><code>FULFILLED</code> → balance due → <code>COMPLETED</code></td></tr>
+            <tr><td class="req-id">PRE-08</td><td>Cancellation: release reservation, forfeiture note, refund record</td></tr>
+          </tbody>
+        </table>
+
+        <h3>5.6 Payments · 5.8 Reporting · 5.9 L10n</h3>
+        <p>Manual methods: <code>CASH</code>, <code>BANK_TRANSFER</code>, <code>KBZPAY_MANUAL</code>, <code>WAVE_MANUAL</code>, <code>OTHER</code>. Immutable payments with reversal audit trail. Reports: sales summary, top products, pre-order pipeline, payment breakdown, CSV export. Full EN/MY strings; light/dark theme.</p>
+
+        <h3 id="s5-ai">5.7 AI order assistant</h3>
+        <table>
+          <thead><tr><th>ID</th><th>Requirement</th></tr></thead>
+          <tbody>
+            <tr><td class="req-id">AI-01</td><td>BYOK config encrypted at rest</td></tr>
+            <tr><td class="req-id">AI-03</td><td>Shop-scoped product + customer context only</td></tr>
+            <tr><td class="req-id">AI-04</td><td>Returns <code>OrderDraft</code> JSON</td></tr>
+            <tr><td class="req-id">AI-05</td><td>Editable form; explicit Confirm to persist</td></tr>
+            <tr><td class="req-id">AI-07</td><td>Graceful fallback to manual entry</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Section 6 -->
+      <section id="s6">
+        <h2>6. Non-functional requirements</h2>
+        <div class="two-col">
+          <div class="card">
+            <h4>Security</h4>
+            <ul>
+              <li>Tenant isolation on every query</li>
+              <li>bcrypt/argon2 passwords; JWT rotation</li>
+              <li>Encrypted BYOK keys; rate limits</li>
+              <li>Audit: status, payments, stock, AI confirms</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Performance & reliability</h4>
+            <ul>
+              <li>API p95 &lt; 300ms (indexed)</li>
+              <li>AI timeout 30s</li>
+              <li>Daily PG backups; idempotent payments</li>
+              <li>Optimistic locking on stock</li>
+            </ul>
+          </div>
+        </div>
+        <p><strong>A11y:</strong> WCAG 2.1 AA (web); touch targets + screen reader labels (mobile).</p>
+      </section>
+
+      <!-- Section 7 -->
+      <section id="s7">
+        <h2>7. Data model</h2>
+        <pre><code>User ──&lt; ShopMember &gt;── Shop (tenant)
+Shop ──&lt; Product, Category, Customer, Order, AiConfig, ChatSession
+Customer ──&lt; Order
+Order ──&lt; OrderLineItem, Payment, OrderStatusHistory
+Order ── optional ── ChatSession</code></pre>
+        <h3>Core enums</h3>
+        <div class="flow">
+          <span class="flow-step">STANDARD</span>
+          <span class="flow-step">PREORDER</span>
+          <span class="flow-arrow">·</span>
+          <span class="flow-step">DRAFT</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">CONFIRMED</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">DEPOSIT_PAID</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">RESERVED</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">READY_TO_FULFILL</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">FULFILLED</span>
+          <span class="flow-arrow">→</span>
+          <span class="flow-step">COMPLETED</span>
+        </div>
+        <p>PostgreSQL canonical; SQLite for local dev/tests. All shop tables include <code>shopId</code>. See <code>PROJECT_SPEC.md</code> §7.2 for full Prisma models.</p>
+      </section>
+
+      <!-- Section 8 -->
+      <section id="s8">
+        <h2>8. API overview</h2>
+        <p>Base: <code>/api/v1</code> · Auth: <code>Bearer</code> JWT · Locale: <code>Accept-Language: en|my</code></p>
+        <table>
+          <thead><tr><th>Group</th><th>Endpoints</th></tr></thead>
+          <tbody>
+            <tr><td>Auth</td><td><code>POST /auth/register|login|refresh|logout</code> · <code>GET /auth/verify</code></td></tr>
+            <tr><td>Shop</td><td><code>POST /shops</code> · <code>GET|PATCH /shops/current</code></td></tr>
+            <tr><td>Catalog</td><td><code>/products</code> · <code>/categories</code> · <code>POST .../adjust-stock</code></td></tr>
+            <tr><td>Customers</td><td><code>/customers</code> · <code>/customers/:id/orders</code></td></tr>
+            <tr><td>Orders</td><td><code>/orders</code> · <code>.../status</code> · <code>.../payments</code> · <code>.../history</code></td></tr>
+            <tr><td>AI</td><td><code>/ai/config</code> · <code>/ai/sessions</code> · <code>.../messages</code> · <code>.../confirm</code></td></tr>
+            <tr><td>Reports</td><td><code>/reports/sales-summary</code> · <code>top-products</code> · <code>preorder-pipeline</code> · export</td></tr>
+            <tr><td>Platform</td><td><code>GET /platform/shops</code> · <code>POST .../suspend</code> (internal)</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Section 9 -->
+      <section id="s9">
+        <h2>9. UI/UX & workflows</h2>
+        <h3>Design principles</h3>
+        <ul>
+          <li>Messenger-first: chat → structured receipt</li>
+          <li>Confirm before commit (AI, payments, stock)</li>
+          <li>Bilingual parity; light/dark themes</li>
+        </ul>
+
+        <div class="two-col">
+          <div class="card">
+            <h4>Web routes</h4>
+            <pre><code>/dashboard
+/orders, /orders/new, /orders/:id
+/pre-orders
+/customers, /products
+/reports, /assistant
+/settings
+/auth/login, /register</code></pre>
+          </div>
+          <div class="card">
+            <h4>Mobile tabs</h4>
+            <pre><code>Dashboard · Orders
+Customers · Assistant
+Settings
++ stack: order/product/customer detail</code></pre>
+          </div>
+        </div>
+
+        <h3 id="s9-preorder-flow">Pre-order fulfillment lifecycle</h3>
+        <div class="flow" style="flex-direction:column; align-items:stretch;">
+          <div><strong>1.</strong> Create pre-order — customer, items, expected date, required deposit</div>
+          <div><strong>2.</strong> Record deposit → <code>DEPOSIT_PAID</code> → stock reserved</div>
+          <div><strong>3.</strong> Pipeline view by status (web kanban / mobile segments)</div>
+          <div><strong>4.</strong> Mark <code>READY_TO_FULFILL</code> when stock arrives</div>
+          <div><strong>5.</strong> Fulfill → <code>FULFILLED</code> → collect balance</div>
+          <div><strong>6.</strong> Final payment → <code>COMPLETED</code></div>
+        </div>
+
+        <h3>AI assistant flow</h3>
+        <ol>
+          <li>Paste messenger text or describe order</li>
+          <li>Backend returns editable <code>OrderDraft</code></li>
+          <li>Staff edits customer/items/qty</li>
+          <li><strong>Confirm</strong> persists order (default <code>DRAFT</code>)</li>
+        </ol>
+      </section>
+
+      <!-- Section 10 -->
+      <section id="s10">
+        <h2>10. Architecture</h2>
+        <pre><code>pos/
+├── PROJECT_SPEC.md
+├── frontend/     React + Vite staff console
+├── backend/      Express API
+└── mobile/       Expo staff app</code></pre>
+        <table>
+          <thead><tr><th>Layer</th><th>Pattern</th></tr></thead>
+          <tbody>
+            <tr><td>Backend</td><td>Routes → Controllers → Services → Repositories (Prisma)</td></tr>
+            <tr><td>Frontend</td><td><code>features/</code> + React Query + shadcn/ui</td></tr>
+            <tr><td>Mobile</td><td>Expo Router + Expo UI; mirror feature domains</td></tr>
+            <tr><td>AI</td><td>BYOK decrypt → bounded catalog context → LLM JSON → validate → draft only until /confirm</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Section 11 -->
+      <section id="s11">
+        <h2>11. Implementation milestones (~13 weeks)</h2>
+
+        <div class="milestone">
+          <div class="week">M0<br>W1–2</div>
+          <div>
+            <h4>Foundation</h4>
+            <p>Scaffold all three apps; JWT; shop registration; tenant middleware; CI.</p>
+            <div class="exit"><strong>Exit:</strong> Owner registers, creates shop, logs in on web + mobile.</div>
+          </div>
+        </div>
+        <div class="milestone">
+          <div class="week">M1<br>W3–4</div>
+          <div>
+            <h4>Catalog & customers</h4>
+            <p>Product/category CRUD, images, customer CRUD, stock adjustments.</p>
+            <div class="exit"><strong>Exit:</strong> Full catalog + CRM on web and mobile.</div>
+          </div>
+        </div>
+        <div class="milestone">
+          <div class="week">M2<br>W5–6</div>
+          <div>
+            <h4>Orders & payments</h4>
+            <p>Standard orders, line items, payments, search/filters.</p>
+            <div class="exit"><strong>Exit:</strong> End-to-end messenger orders with payments.</div>
+          </div>
+        </div>
+        <div class="milestone">
+          <div class="week">M3<br>W7–8</div>
+          <div>
+            <h4>Pre-orders</h4>
+            <p>Deposit rules, reservations, pipeline views, audit trail.</p>
+            <div class="exit"><strong>Exit:</strong> Full pre-order lifecycle to <code>COMPLETED</code>.</div>
+          </div>
+        </div>
+        <div class="milestone">
+          <div class="week">M4<br>W9</div>
+          <div>
+            <h4>Reporting</h4>
+            <p>Sales, top products, pipeline, payment breakdown, CSV.</p>
+            <div class="exit"><strong>Exit:</strong> Reports match §5.8 for date range.</div>
+          </div>
+        </div>
+        <div class="milestone">
+          <div class="week">M5<br>W10–11</div>
+          <div>
+            <h4>AI assistant</h4>
+            <p>BYOK settings, chat UI, draft confirm, session audit.</p>
+            <div class="exit"><strong>Exit:</strong> ≥80% pilot line-item acceptance from messenger text.</div>
+          </div>
+        </div>
+        <div class="milestone">
+          <div class="week">M6<br>W12–13</div>
+          <div>
+            <h4>Hardening & pilot</h4>
+            <p>Platform ops admin, security review, Myanmar copy, 3–5 pilot shops.</p>
+            <div class="exit"><strong>Exit:</strong> Daily use without critical defects; tenant isolation verified.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 12 & 13 -->
+      <section id="s12">
+        <h2>12. Assumptions & open items</h2>
+        <table>
+          <thead><tr><th>Item</th><th>Resolution</th></tr></thead>
+          <tbody>
+            <tr><td>Reporting depth</td><td>MVP in §5.8 — confirm before M4</td></tr>
+            <tr><td>Extra channels</td><td>Messenger primary; PHONE/IN_PERSON tags supported</td></tr>
+            <tr><td>Staff roles</td><td>Owner only v1; enum extensible</td></tr>
+            <tr><td>Order numbers</td><td><code>{PREFIX}-{YYYY}-{SEQ}</code> server-side</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="s13">
+        <h2>13. Glossary</h2>
+        <table>
+          <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td>Shop / tenant</td><td>Independent business; unit of data isolation</td></tr>
+            <tr><td>Pre-order</td><td>Advance order with deposit, reservation, later fulfillment</td></tr>
+            <tr><td>Deposit</td><td>Partial payment securing a pre-order</td></tr>
+            <tr><td>Balance due</td><td><code>totalMMK - amountPaidMMK</code></td></tr>
+            <tr><td>BYOK</td><td>Bring your own LLM API key per shop</td></tr>
+            <tr><td>Reservation</td><td><code>reservedQty</code> held until fulfill or cancel</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <p class="footnote">
+        Authoritative source: <code>PROJECT_SPEC.md</code> (v1.0). This HTML is a visual overview for human review. For full Prisma schema and requirement tables, refer to the Markdown specification.
+      </p>
+    </main>
+  </div>
+</body>
+</html>

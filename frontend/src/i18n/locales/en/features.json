@@ -1,0 +1,123 @@
+{
+  "products": {
+    "title": "Products",
+    "description": "Manage your catalog, pricing, and stock levels.",
+    "addProduct": "Add product",
+    "addFirstProduct": "Add your first product",
+    "emptyTitle": "No products yet",
+    "emptyDescription": "Add products to start building orders and tracking inventory.",
+    "loadError": "Could not load products.",
+    "retry": "Try again",
+    "backToList": "Back to products",
+    "createTitle": "New product",
+    "createDescription": "Add a product to your shop catalog.",
+    "editTitle": "Edit product",
+    "editDescription": "Update product details and pricing.",
+    "formTitle": "Product details",
+    "formDescription": "SKU must be unique within your shop.",
+    "createProduct": "Create product",
+    "saveChanges": "Save changes",
+    "saving": "Saving…",
+    "created": "Product created.",
+    "updated": "Product updated.",
+    "archived": "Product archived.",
+    "saveError": "Could not save product.",
+    "cancel": "Cancel",
+    "adjustStock": "Adjust stock",
+    "archive": "Archive",
+    "columns": {
+      "name": "Name",
+      "sku": "SKU",
+      "price": "Price",
+      "stock": "Stock",
+      "status": "Status"
+    },
+    "status": {
+      "archived": "Archived",
+      "lowStock": "Low stock"
+    },
+    "fields": {
+      "name": "Name",
+      "sku": "SKU",
+      "price": "Price (MMK)",
+      "stockQty": "Initial stock",
+      "lowStockAt": "Low stock alert at",
+      "category": "Category",
+      "categoryPlaceholder": "Select category",
+      "noCategory": "No category",
+      "imageUrl": "Image URL"
+    },
+    "validation": {
+      "required": "This field is required.",
+      "invalidAmount": "Enter a valid whole number.",
+      "invalidUrl": "Enter a valid URL."
+    },
+    "detail": {
+      "price": "Unit price",
+      "stock": "In stock",
+      "reserved": "{{count}} reserved",
+      "alerts": "Alerts",
+      "noAlerts": "No alerts"
+    },
+    "stockDialog": {
+      "title": "Adjust stock",
+      "description": "Current stock: {{stock}}. Use positive numbers to add and negative numbers to remove.",
+      "deltaQty": "Quantity change",
+      "reason": "Reason",
+      "note": "Note (optional)",
+      "submit": "Apply adjustment",
+      "insufficientStock": "Stock cannot go below zero."
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "description": "Manage customer contacts and order history.",
+    "addCustomer": "Add customer",
+    "addFirstCustomer": "Add your first customer",
+    "emptyTitle": "No customers yet",
+    "emptyDescription": "Add customers to track orders and contact details.",
+    "noResultsTitle": "No customers found",
+    "noResultsDescription": "Try a different name or phone number.",
+    "searchPlaceholder": "Search by name or phone…",
+    "loadError": "Could not load customers.",
+    "retry": "Try again",
+    "backToList": "Back to customers",
+    "createTitle": "New customer",
+    "createDescription": "Add a customer to your shop.",
+    "editTitle": "Edit customer",
+    "editDescription": "Update contact details and notes.",
+    "createCustomer": "Create customer",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "created": "Customer created.",
+    "updated": "Customer updated.",
+    "saveError": "Could not save customer.",
+    "columns": {
+      "name": "Name",
+      "phone": "Phone",
+      "address": "Address"
+    },
+    "fields": {
+      "name": "Name",
+      "phone": "Phone",
+      "address": "Address",
+      "notes": "Notes"
+    },
+    "validation": {
+      "required": "This field is required."
+    },
+    "errors": {
+      "duplicatePhone": "A customer with this phone number already exists."
+    },
+    "ordersTitle": "Order history",
+    "ordersDescription": "Past orders for this customer.",
+    "ordersEmpty": "No orders yet for this customer.",
+    "ordersLoadError": "Could not load order history.",
+    "orderColumns": {
+      "number": "Order #",
+      "status": "Status",
+      "total": "Total",
+      "paid": "Paid"
+    }
+  }
+}

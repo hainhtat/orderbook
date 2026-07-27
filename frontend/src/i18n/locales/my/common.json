@@ -1,0 +1,22 @@
+{
+  "appName": "Order Notebook",
+  "loading": "ဖွင့်နေသည်…",
+  "save": "သိမ်းမည်",
+  "cancel": "ပယ်ဖျက်မည်",
+  "logout": "ထွက်မည်",
+  "language": "ဘာသာစကား",
+  "theme": "အပြင်အဆင်",
+  "themeLight": "အလင်း",
+  "themeDark": "အမှောင်",
+  "english": "အင်္ဂလိပ်",
+  "myanmar": "မြန်မာ",
+  "nav": {
+    "dashboard": "ဒက်ရှ်ဘုတ်",
+    "products": "ကုန်ပစ္စည်းများ",
+    "customers": "ဖောက်သည်များ",
+    "settings": "ဆက်တင်များ"
+  },
+  "errors": {
+    "generic": "တစ်ခုခု မှားယွင်းနေပါသည်။ ထပ်မံကြိုးစားပါ။"
+  }
+}

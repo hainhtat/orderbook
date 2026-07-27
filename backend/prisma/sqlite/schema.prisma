@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/sqlite"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum ShopMemberRole {
+  OWNER
+}
+
+enum ShopStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum OrderType {
+  STANDARD
+  PREORDER
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  DEPOSIT_PAID
+  RESERVED
+  AWAITING_STOCK
+  READY_TO_FULFILL
+  FULFILLED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  KBZPAY_MANUAL
+  WAVE_MANUAL
+  OTHER
+}
+
+enum OrderChannel {
+  MESSENGER
+  PHONE
+  IN_PERSON
+  OTHER
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
+  name            String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  memberships     ShopMember[]
+  refreshSessions RefreshSession[]
+}
+
+model RefreshSession {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Shop {
+  id                    String       @id @default(cuid())
+  slug                  String       @unique
+  name                  String
+  phone                 String?
+  address               String?
+  allowOversell         Boolean      @default(false)
+  preorderDepositMinPct Int?         @default(30)
+  status                ShopStatus   @default(ACTIVE)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  members               ShopMember[]
+  products              Product[]
+  categories            Category[]
+  customers             Customer[]
+  orders                Order[]
+  aiConfig              AiConfig?
+  chatSessions          ChatSession[]
+}
+
+model ShopMember {
+  id     String         @id @default(cuid())
+  shopId String
+  userId String
+  role   ShopMemberRole @default(OWNER)
+  shop   Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+  @@index([userId])
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  shopId    String
+  name      String
+  sortOrder Int       @default(0)
+  shop      Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  products  Product[]
+
+  @@unique([shopId, name])
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  shopId      String
+  categoryId  String?
+  sku         String
+  name        String
+  priceMMK    Int
+  stockQty    Int       @default(0)
+  reservedQty Int       @default(0)
+  lowStockAt  Int?
+  imageUrl    String?
+  isArchived  Boolean   @default(false)
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category    Category? @relation(fields: [categoryId], references: [id])
+
+  @@unique([shopId, sku])
+  @@index([shopId, isArchived])
+}
+
+model Customer {
+  id      String  @id @default(cuid())
+  shopId  String
+  name    String
+  phone   String
+  address String?
+  notes   String?
+  shop    Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  orders  Order[]
+
+  @@unique([shopId, phone])
+}
+
+model Order {
+  id                String               @id @default(cuid())
+  shopId            String
+  customerId        String
+  orderNumber       String
+  type              OrderType            @default(STANDARD)
+  status            OrderStatus          @default(DRAFT)
+  channel           OrderChannel         @default(MESSENGER)
+  channelReference  String?
+  subtotalMMK       Int
+  discountMMK       Int                  @default(0)
+  totalMMK          Int
+  amountPaidMMK     Int                  @default(0)
+  expectedFulfillAt DateTime?
+  notes             String?
+  chatSessionId     String?
+  createdByUserId   String
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  shop              Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  customer          Customer             @relation(fields: [customerId], references: [id])
+  lineItems         OrderLineItem[]
+  payments          Payment[]
+  statusHistory     OrderStatusHistory[]
+
+  @@unique([shopId, orderNumber])
+  @@index([shopId, status, createdAt])
+  @@index([shopId, customerId])
+}
+
+model OrderLineItem {
+  id           String  @id @default(cuid())
+  orderId      String
+  productId    String?
+  productName  String
+  productSku   String
+  unitPriceMMK Int
+  quantity     Int
+  lineTotalMMK Int
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id         String        @id @default(cuid())
+  orderId    String
+  shopId     String
+  amountMMK  Int
+  method     PaymentMethod
+  note       String?
+  recordedBy String
+  createdAt  DateTime      @default(now())
+  order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+}
+
+model OrderStatusHistory {
+  id         String       @id @default(cuid())
+  orderId    String
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note       String?
+  actorId    String
+  createdAt  DateTime     @default(now())
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model StockAdjustment {
+  id        String   @id @default(cuid())
+  shopId    String
+  productId String
+  deltaQty  Int
+  reason    String
+  note      String?
+  actorId   String
+  createdAt DateTime @default(now())
+
+  @@index([shopId, productId])
+}
+
+model AiConfig {
+  id           String  @id @default(cuid())
+  shopId       String  @unique
+  provider     String
+  apiKeyCipher String
+  model        String?
+  isEnabled    Boolean @default(false)
+  shop         Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  shopId    String
+  userId    String
+  createdAt DateTime      @default(now())
+  shop      Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  draftJson String?
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}

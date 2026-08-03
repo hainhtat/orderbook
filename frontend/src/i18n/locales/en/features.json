@@ -286,9 +286,9 @@
         "UNSPECIFIED": "Choose later",
         "COD": "Cash on delivery",
         "CASH": "Cash",
-        "BANK_TRANSFER": "Bank transfer",
-        "KBZPAY_MANUAL": "KBZPay",
-        "WAVE_MANUAL": "Wave Money",
+        "BANK_TRANSFER": "Bank Transfer",
+        "KBZPAY_MANUAL": "KBZPay Manual",
+        "WAVE_MANUAL": "Wave Manual",
         "OTHER": "Other"
       }
     },

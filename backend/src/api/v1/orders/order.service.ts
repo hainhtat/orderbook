@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from '../../../../generated/sqlite/index.js';
+import type { Prisma, PrismaClient } from '../../../../generated/client/index.js';
 import { AppError } from '../../../errors/app-error.js';
 import { postCodCollectionFee, postPaymentToCashbook } from '../cashbook/cashbook.service.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';

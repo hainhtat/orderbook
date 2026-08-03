@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CashAccountType, PaymentMethod, Prisma, PrismaClient } from '../../../../generated/sqlite/index.js';
+import type { CashAccountType, PaymentMethod, Prisma, PrismaClient } from '../../../../generated/client/index.js';
 import { AppError } from '../../../errors/app-error.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';
 

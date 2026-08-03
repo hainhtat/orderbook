@@ -1,4 +1,4 @@
-import { PrismaClient } from '../../generated/sqlite/index.js';
+import { PrismaClient } from '../../generated/client/index.js';
 import type { Env } from '../config/env.js';
 
 let prisma: PrismaClient | null = null;

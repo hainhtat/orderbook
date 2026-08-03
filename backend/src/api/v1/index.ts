@@ -1,4 +1,4 @@
-import type { PrismaClient } from '../../../generated/sqlite/index.js';
+import type { PrismaClient } from '../../../generated/client/index.js';
 import type { Env } from '../../config/env.js';
 import type { TokenService } from '../../utilities/tokens.js';
 import { AuthService } from './auth/auth.service.js';

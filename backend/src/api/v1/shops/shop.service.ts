@@ -1,4 +1,4 @@
-import type { PrismaClient, Shop } from '../../../../generated/sqlite/index.js';
+import type { PrismaClient, Shop } from '../../../../generated/client/index.js';
 import { AppError } from '../../../errors/app-error.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';
 

@@ -1,4 +1,4 @@
-import type { PrismaClient } from '../../../../generated/sqlite/index.js';
+import type { PrismaClient } from '../../../../generated/client/index.js';
 import { decryptSecret, encryptSecret } from '../../../utilities/encryption.js';
 import { AppError } from '../../../errors/app-error.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';

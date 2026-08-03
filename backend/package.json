@@ -15,7 +15,9 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest --selectProjects unit",
     "test:integration": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest --selectProjects integration --runInBand",
     "db:generate": "prisma generate --schema prisma/sqlite/schema.prisma",
+    "db:generate:pg": "prisma generate --schema prisma/postgresql/schema.prisma",
     "db:push": "prisma db push --schema prisma/sqlite/schema.prisma",
+    "db:push:pg": "prisma db push --schema prisma/postgresql/schema.prisma",
     "db:reset": "prisma db push --force-reset --schema prisma/sqlite/schema.prisma"
   },
   "dependencies": {

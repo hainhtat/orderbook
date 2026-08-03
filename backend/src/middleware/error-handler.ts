@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { Prisma } from '../../generated/sqlite/index.js';
+import { Prisma } from '../../generated/client/index.js';
 import { AppError, isAppError } from '../errors/app-error.js';
 import { ErrorCodes } from '../errors/error-codes.js';
 import { t } from '../i18n/index.js';

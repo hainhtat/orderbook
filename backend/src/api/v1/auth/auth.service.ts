@@ -1,4 +1,4 @@
-import type { PrismaClient, Shop, User } from '../../../../generated/sqlite/index.js';
+import type { PrismaClient, Shop, User } from '../../../../generated/client/index.js';
 import { hashPassword, verifyPassword } from '../../../utilities/passwords.js';
 import type { TokenService } from '../../../utilities/tokens.js';
 import { AppError } from '../../../errors/app-error.js';

@@ -13,6 +13,7 @@ export const updateShopValidators = [
   body('phone').optional().trim(),
   body('address').optional().trim(),
   body('logoUrl').optional({ nullable: true }).isURL({ protocols: ['http', 'https'] }).trim(),
+  body('receiptFooter').optional({ nullable: true }).isString().isLength({ max: 200 }).trim(),
   body('allowOversell').optional().isBoolean(),
   body('preorderDepositMinPct').optional().isInt({ min: 0, max: 100 }),
 ];

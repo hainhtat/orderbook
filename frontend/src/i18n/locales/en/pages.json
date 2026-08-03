@@ -32,6 +32,8 @@
     "shopSlug": "Slug",
     "shopPhone": "Phone",
     "shopAddress": "Address",
+    "receiptFooter": "Receipt footer",
+    "receiptFooterPlaceholder": "Thank you for your order.",
     "save": "Save changes",
     "logoUrl": "Receipt logo URL",
     "logoUrlInvalid": "Enter a valid HTTPS image URL.",

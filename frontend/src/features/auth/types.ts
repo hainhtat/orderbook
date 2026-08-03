@@ -11,6 +11,7 @@ export type Shop = {
   phone?: string | null
   address?: string | null
   logoUrl?: string | null
+  receiptFooter?: string | null
 }
 
 export type AuthTokens = {
@@ -44,6 +45,7 @@ export type CreateShopInput = {
   phone?: string
   address?: string
   logoUrl?: string
+  receiptFooter?: string
 }
 
 export type AuthState =

@@ -20,6 +20,7 @@ export type PublicShop = {
   preorderDepositMinPct: number | null;
   status: string;
   logoUrl: string | null;
+  receiptFooter: string | null;
 };
 
 function toPublicShop(shop: Shop): PublicShop {
@@ -33,6 +34,7 @@ function toPublicShop(shop: Shop): PublicShop {
     preorderDepositMinPct: shop.preorderDepositMinPct,
     status: shop.status,
     logoUrl: shop.logoUrl,
+    receiptFooter: shop.receiptFooter,
   };
 }
 
@@ -86,7 +88,15 @@ export class ShopService {
 
   async updateShop(
     shopId: string,
-    input: Partial<{ name: string; phone: string; address: string; logoUrl: string; allowOversell: boolean; preorderDepositMinPct: number }>,
+    input: Partial<{
+      name: string;
+      phone: string;
+      address: string;
+      logoUrl: string;
+      receiptFooter: string;
+      allowOversell: boolean;
+      preorderDepositMinPct: number;
+    }>,
   ): Promise<PublicShop> {
     const shop = await this.prisma.shop.update({
       where: { id: shopId },

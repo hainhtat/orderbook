@@ -108,6 +108,7 @@ model Shop {
   logoUrl               String?
   phone                 String?
   address               String?
+  receiptFooter         String?      @default("Thank you for your order.")
   allowOversell         Boolean      @default(false)
   preorderDepositMinPct Int?         @default(30)
   status                ShopStatus   @default(ACTIVE)

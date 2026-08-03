@@ -39,6 +39,7 @@ export function SettingsPage() {
     phone: z.string().optional(),
     address: z.string().optional(),
     logoUrl: z.string().url(t('settings.logoUrlInvalid')).optional().or(z.literal('')),
+    receiptFooter: z.string().max(200).optional(),
   })
 
   type SettingsFormValues = z.infer<typeof schema>
@@ -51,6 +52,7 @@ export function SettingsPage() {
       phone: '',
       address: '',
       logoUrl: '',
+      receiptFooter: 'Thank you for your order.',
     },
   })
 
@@ -62,6 +64,7 @@ export function SettingsPage() {
         phone: state.shop.phone ?? '',
         address: state.shop.address ?? '',
         logoUrl: state.shop.logoUrl ?? '',
+        receiptFooter: state.shop.receiptFooter ?? 'Thank you for your order.',
       })
     }
   }, [form, state])
@@ -74,6 +77,7 @@ export function SettingsPage() {
         phone: values.phone || undefined,
         address: values.address || undefined,
         logoUrl: values.logoUrl || undefined,
+        receiptFooter: values.receiptFooter?.trim() || 'Thank you for your order.',
       })
       setShop(shop)
       toast.success(t('settings.saved'))
@@ -161,6 +165,22 @@ export function SettingsPage() {
                     <FormLabel>{t('settings.shopAddress')}</FormLabel>
                     <FormControl>
                       <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="receiptFooter"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('settings.receiptFooter')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('settings.receiptFooterPlaceholder')}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

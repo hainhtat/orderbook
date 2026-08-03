@@ -32,6 +32,8 @@
     "shopSlug": "Slug",
     "shopPhone": "ဖုန်း",
     "shopAddress": "လိပ်စာ",
+    "receiptFooter": "ဘောင်ချာအောက်ခြေစာသား",
+    "receiptFooterPlaceholder": "Thank you for your order.",
     "save": "ပြောင်းလဲမှုများ သိမ်းမည်",
     "logoUrl": "ဘောင်ချာလိုဂို URL",
     "logoUrlInvalid": "မှန်ကန်သော HTTPS ပုံ URL ထည့်ပါ။",

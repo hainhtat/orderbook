@@ -10,6 +10,7 @@ import {
 import type { Shop } from '@/features/auth/types'
 import type { Order } from '@/features/orders/types'
 import { formatMMK } from '@/lib/format-mmk'
+import { cn } from '@/lib/utils'
 
 const DEFAULT_FOOTER = 'Thank you for your order.'
 
@@ -193,21 +194,26 @@ export function ReceiptDialog({
         if (!open) onClose()
       }}
     >
-      <DialogContent className="flex max-h-[95dvh] w-[calc(100vw-1.5rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:w-full print:max-h-none print:max-w-none print:overflow-visible">
-        <DialogHeader className="border-b px-5 py-4 pr-12 text-left">
+      <DialogContent
+        className={cn(
+          'fixed left-1/2 top-1/2 z-50 flex max-h-[min(95dvh,920px)] w-[min(56rem,calc(100vw-2rem))] max-w-none -translate-x-1/2 -translate-y-1/2 flex-col gap-0 overflow-y-auto rounded-xl border bg-background p-0 shadow-lg',
+          'print:max-h-none print:w-auto print:max-w-none print:translate-x-0 print:translate-y-0 print:overflow-visible',
+        )}
+      >
+        <DialogHeader className="shrink-0 border-b px-6 py-4 pr-12 text-left">
           <DialogTitle className="text-base font-semibold">{shop.name}</DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground">
             Receipt {order.orderNumber}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-100 p-4 sm:p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-slate-100 px-4 py-5 sm:px-8 sm:py-6">
           <article
             id="print-receipt"
-            className="receipt-print-area mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm"
+            className="receipt-print-area mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-sm"
           >
-            <div className="h-1.5 bg-slate-900" />
-            <div className="space-y-6 p-6 sm:p-8">
+            <div className="h-1.5 rounded-t-2xl bg-slate-900" />
+            <div className="space-y-6 px-6 py-6 sm:px-10 sm:py-8">
               <header className="text-center">
                 {shop.logoUrl ? (
                   <img
@@ -225,16 +231,16 @@ export function ReceiptDialog({
                 {shop.phone ? <p className="text-sm text-slate-500">{shop.phone}</p> : null}
               </header>
 
-              <section className="flex items-end justify-between gap-4 rounded-xl bg-slate-50 px-4 py-3">
-                <div>
+              <section className="flex items-end justify-between gap-4 rounded-xl bg-slate-50 px-5 py-4">
+                <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                     Order
                   </p>
-                  <p className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+                  <p className="mt-1 truncate text-lg font-semibold tracking-tight text-slate-950">
                     {order.orderNumber}
                   </p>
                 </div>
-                <div className="text-right text-sm text-slate-500">
+                <div className="shrink-0 text-right text-sm text-slate-500">
                   <p>{new Date(order.createdAt).toLocaleDateString()}</p>
                   <p className="mt-1 font-medium text-slate-800">
                     {order.paymentMethod ?? 'Unpaid'}
@@ -257,7 +263,7 @@ export function ReceiptDialog({
               </section>
 
               <section>
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] border-b border-slate-900 px-1 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 border-b border-slate-900 px-1 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                   <span>Item</span>
                   <span>Amount</span>
                 </div>
@@ -272,31 +278,31 @@ export function ReceiptDialog({
                         {formatMMK(item.unitPriceMMK)} × {item.quantity}
                       </p>
                     </div>
-                    <span className="whitespace-nowrap font-semibold text-slate-900">
+                    <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-slate-900">
                       {formatMMK(item.lineTotalMMK)}
                     </span>
                   </div>
                 ))}
               </section>
 
-              <section className="ml-auto w-full max-w-xs space-y-2 text-sm">
-                <div className="flex justify-between gap-6">
+              <section className="ml-auto w-full max-w-sm space-y-2 text-sm">
+                <div className="flex justify-between gap-8">
                   <span className="text-slate-500">Subtotal</span>
-                  <span className="whitespace-nowrap tabular-nums">
+                  <span className="shrink-0 whitespace-nowrap tabular-nums">
                     {formatMMK(order.subtotalMMK)}
                   </span>
                 </div>
                 {order.discountMMK ? (
-                  <div className="flex justify-between gap-6">
+                  <div className="flex justify-between gap-8">
                     <span className="text-slate-500">Discount</span>
-                    <span className="whitespace-nowrap tabular-nums">
+                    <span className="shrink-0 whitespace-nowrap tabular-nums">
                       -{formatMMK(order.discountMMK)}
                     </span>
                   </div>
                 ) : null}
-                <div className="flex justify-between gap-6 border-t border-slate-200 pt-3 text-base font-semibold text-slate-950">
+                <div className="flex justify-between gap-8 border-t border-slate-200 pt-3 text-base font-semibold text-slate-950">
                   <span>Total</span>
-                  <span className="whitespace-nowrap tabular-nums">
+                  <span className="shrink-0 whitespace-nowrap tabular-nums">
                     {formatMMK(order.totalMMK)}
                   </span>
                 </div>
@@ -309,7 +315,7 @@ export function ReceiptDialog({
           </article>
         </div>
 
-        <div className="receipt-actions grid grid-cols-2 gap-2 border-t bg-background p-4 sm:flex sm:justify-end">
+        <div className="receipt-actions grid shrink-0 grid-cols-2 gap-2 border-t bg-background p-4 sm:flex sm:justify-end">
           <Button variant="ghost" onClick={onClose}>
             <X className="mr-2 h-4 w-4" />
             Close

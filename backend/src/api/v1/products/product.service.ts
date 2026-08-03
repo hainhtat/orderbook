@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../../../../generated/client/index.js';
+import { OPEN_UNFULFILLED_PREORDER_STATUSES } from '../../../domain/open-preorder.js';
 import { AppError } from '../../../errors/app-error.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';
 
@@ -22,6 +23,21 @@ export type PublicProduct = {
   categoryId: string | null;
   soldQuantity: number;
   salesRevenueMMK: number;
+  /** Sum of line qtys on open unfulfilled pre-orders for this product. */
+  openPreorderQty: number;
+  /** Distinct open unfulfilled pre-orders that include this product. */
+  openPreorderCount: number;
+  /**
+   * Units still needed on-hand to cover open pre-order demand:
+   * `max(0, openPreorderQty - stockQty)`.
+   * UI badge / "needs restock" when `preorderNeededQty > 0`.
+   */
+  preorderNeededQty: number;
+};
+
+type OpenPreorderDemand = {
+  openPreorderQty: number;
+  openPreorderCount: number;
 };
 
 function toPublicProduct(p: {
@@ -38,12 +54,21 @@ function toPublicProduct(p: {
   categoryId: string | null;
   soldQuantity?: number;
   salesRevenueMMK?: number;
+  openPreorderQty?: number;
+  openPreorderCount?: number;
+  preorderNeededQty?: number;
 }): PublicProduct {
+  const openPreorderQty = p.openPreorderQty ?? 0;
+  const openPreorderCount = p.openPreorderCount ?? 0;
   return {
     ...p,
     availableStock: p.availableStock ?? Math.max(0, p.stockQty - p.reservedQty),
     soldQuantity: p.soldQuantity ?? 0,
     salesRevenueMMK: p.salesRevenueMMK ?? 0,
+    openPreorderQty,
+    openPreorderCount,
+    preorderNeededQty:
+      p.preorderNeededQty ?? Math.max(0, openPreorderQty - p.stockQty),
   };
 }
 
@@ -52,6 +77,7 @@ export type ListProductsOptions = {
   search?: string;
   categoryId?: string;
   lowStock?: boolean;
+  needsPreorderRestock?: boolean;
   page?: number;
   limit?: number;
 };
@@ -78,8 +104,67 @@ export class ProductService {
     return categoryId;
   }
 
+  /** One query: open unfulfilled pre-order line demand grouped by productId. */
+  private async openPreorderDemandByProductId(
+    shopId: string,
+    productIds: string[],
+  ): Promise<Map<string, OpenPreorderDemand>> {
+    const result = new Map<string, OpenPreorderDemand>();
+    for (const id of productIds) {
+      result.set(id, { openPreorderQty: 0, openPreorderCount: 0 });
+    }
+    if (productIds.length === 0) {
+      return result;
+    }
+
+    const lines = await this.prisma.orderLineItem.findMany({
+      where: {
+        productId: { in: productIds },
+        order: {
+          shopId,
+          type: 'PREORDER',
+          status: { in: [...OPEN_UNFULFILLED_PREORDER_STATUSES] },
+        },
+      },
+      select: { productId: true, quantity: true, orderId: true },
+    });
+
+    const orderIdsByProduct = new Map<string, Set<string>>();
+    for (const line of lines) {
+      if (!line.productId) continue;
+      const current = result.get(line.productId) ?? {
+        openPreorderQty: 0,
+        openPreorderCount: 0,
+      };
+      current.openPreorderQty += line.quantity;
+      result.set(line.productId, current);
+
+      let orderIds = orderIdsByProduct.get(line.productId);
+      if (!orderIds) {
+        orderIds = new Set();
+        orderIdsByProduct.set(line.productId, orderIds);
+      }
+      orderIds.add(line.orderId);
+    }
+
+    for (const [productId, orderIds] of orderIdsByProduct) {
+      const current = result.get(productId);
+      if (current) {
+        current.openPreorderCount = orderIds.size;
+      }
+    }
+
+    return result;
+  }
+
   async list(shopId: string, options: ListProductsOptions = {}) {
-    const { includeArchived = false, search, categoryId, lowStock } = options;
+    const {
+      includeArchived = false,
+      search,
+      categoryId,
+      lowStock,
+      needsPreorderRestock,
+    } = options;
     const page = options.page ?? 1;
     const limit = options.limit ?? 25;
     const q = search?.trim();
@@ -99,24 +184,27 @@ export class ProductService {
       orderBy: { name: 'asc' },
     });
 
-    const filtered = lowStock
+    const lowStockFiltered = lowStock
       ? products.filter(
           (product) =>
             product.lowStockAt !== null && product.stockQty <= product.lowStockAt,
         )
       : products;
 
-    const productIds = filtered.map((product) => product.id);
-    const sales = productIds.length
-      ? await this.prisma.orderLineItem.groupBy({
-          by: ['productId'],
-          where: {
-            productId: { in: productIds },
-            order: { shopId, type: 'STANDARD', status: 'DELIVERED' },
-          },
-          _sum: { quantity: true, lineTotalMMK: true },
-        })
-      : [];
+    const productIds = lowStockFiltered.map((product) => product.id);
+    const [sales, openDemand] = await Promise.all([
+      productIds.length
+        ? this.prisma.orderLineItem.groupBy({
+            by: ['productId'],
+            where: {
+              productId: { in: productIds },
+              order: { shopId, type: 'STANDARD', status: 'DELIVERED' },
+            },
+            _sum: { quantity: true, lineTotalMMK: true },
+          })
+        : Promise.resolve([]),
+      this.openPreorderDemandByProductId(shopId, productIds),
+    ]);
     const salesByProductId = new Map(
       sales.flatMap((row) =>
         row.productId
@@ -133,16 +221,35 @@ export class ProductService {
       ),
     );
 
+    const enriched = lowStockFiltered.map((product) =>
+      toPublicProduct({
+        ...product,
+        ...salesByProductId.get(product.id),
+        ...openDemand.get(product.id),
+      }),
+    );
+
+    const filtered = needsPreorderRestock
+      ? enriched.filter((product) => product.preorderNeededQty > 0)
+      : enriched;
+
     const start = (page - 1) * limit;
-    return { items: filtered.slice(start, start + limit).map((product) =>
-      toPublicProduct({ ...product, ...salesByProductId.get(product.id) }),
-    ), pagination: { page, limit, total: filtered.length, totalPages: Math.ceil(filtered.length / limit) } };
+    return {
+      items: filtered.slice(start, start + limit),
+      pagination: {
+        page,
+        limit,
+        total: filtered.length,
+        totalPages: Math.ceil(filtered.length / limit),
+      },
+    };
   }
 
   async get(shopId: string, id: string) {
     const product = await this.prisma.product.findFirst({ where: { id, shopId } });
     if (!product) throw new AppError(ErrorCodes.NOT_FOUND, 404);
-    return toPublicProduct(product);
+    const openDemand = await this.openPreorderDemandByProductId(shopId, [id]);
+    return toPublicProduct({ ...product, ...openDemand.get(id) });
   }
 
   async create(
@@ -278,7 +385,10 @@ export class ProductService {
       return product;
     });
 
-    return toPublicProduct(updated);
+    const openDemand = await this.openPreorderDemandByProductId(shopId, [
+      updated.id,
+    ]);
+    return toPublicProduct({ ...updated, ...openDemand.get(updated.id) });
   }
 }
 

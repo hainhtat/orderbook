@@ -15,9 +15,15 @@ export function fetchLowStockProductCount() {
   }>(`/products?${params}`).then((data) => data.pagination?.total ?? data.products.length)
 }
 
-export function fetchProducts(includeArchived = false, page = 1, limit = 20) {
+export function fetchProducts(
+  includeArchived = false,
+  page = 1,
+  limit = 20,
+  needsPreorderRestock = false,
+) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) })
   if (includeArchived) params.set('includeArchived', 'true')
+  if (needsPreorderRestock) params.set('needsPreorderRestock', 'true')
   return apiRequest<{ products: Product[]; pagination?: { page: number; limit: number; total: number; totalPages: number } }>(`/products?${params}`).then(
     (data) => Object.assign(data.products, { pagination: data.pagination }),
   )

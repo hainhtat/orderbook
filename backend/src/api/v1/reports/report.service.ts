@@ -1,4 +1,5 @@
 import type { PrismaClient } from '../../../../generated/client/index.js';
+import { OPEN_UNFULFILLED_PREORDER_STATUSES } from '../../../domain/open-preorder.js';
 import { AppError } from '../../../errors/app-error.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';
 
@@ -285,27 +286,61 @@ export class ReportService {
 
   async preorderShortages(shopId: string): Promise<{ items: PreorderShortageRow[] }> {
     const lines = await this.prisma.orderLineItem.findMany({
-      where: { order: { shopId, type: 'PREORDER', status: 'AWAITING_STOCK' }, productId: { not: null } },
-      select: { productId: true, productName: true, productSku: true, quantity: true, orderId: true },
+      where: {
+        productId: { not: null },
+        order: {
+          shopId,
+          type: 'PREORDER',
+          status: { in: [...OPEN_UNFULFILLED_PREORDER_STATUSES] },
+        },
+      },
+      select: { productId: true, quantity: true, orderId: true },
     });
     if (lines.length === 0) return { items: [] };
+
     const productIds = [...new Set(lines.map((line) => line.productId!).filter(Boolean))];
     const products = await this.prisma.product.findMany({
       where: { shopId, id: { in: productIds } },
-      select: { id: true, name: true, sku: true, stockQty: true, reservedQty: true },
+      select: { id: true, name: true, sku: true, stockQty: true },
     });
     const byId = new Map(products.map((product) => [product.id, product]));
-    const grouped = new Map<string, PreorderShortageRow>();
+
+    const grouped = new Map<
+      string,
+      Omit<PreorderShortageRow, 'toOrderQty' | 'preorderCount'> & {
+        orderIds: Set<string>;
+      }
+    >();
     for (const line of lines) {
       const product = byId.get(line.productId!);
       if (!product) continue;
       const current = grouped.get(product.id) ?? {
-        productId: product.id, productName: product.name, productSku: product.sku,
-        orderedQty: 0, availableQty: Math.max(0, product.stockQty - product.reservedQty), toOrderQty: 0, preorderCount: 0,
+        productId: product.id,
+        productName: product.name,
+        productSku: product.sku,
+        orderedQty: 0,
+        // On-hand stock — aligned with product `preorderNeededQty` (vs availableStock).
+        availableQty: product.stockQty,
+        orderIds: new Set<string>(),
       };
-      grouped.set(product.id, { ...current, orderedQty: current.orderedQty + line.quantity, preorderCount: current.preorderCount + 1 });
+      current.orderedQty += line.quantity;
+      current.orderIds.add(line.orderId);
+      grouped.set(product.id, current);
     }
-    return { items: [...grouped.values()].map((item) => ({ ...item, toOrderQty: Math.max(0, item.orderedQty - item.availableQty) })).filter((item) => item.toOrderQty > 0).sort((a, b) => b.toOrderQty - a.toOrderQty) };
+
+    return {
+      items: [...grouped.values()]
+        .map((item) => {
+          const { orderIds, ...row } = item;
+          return {
+            ...row,
+            preorderCount: orderIds.size,
+            toOrderQty: Math.max(0, row.orderedQty - row.availableQty),
+          };
+        })
+        .filter((item) => item.toOrderQty > 0)
+        .sort((a, b) => b.toOrderQty - a.toOrderQty),
+    };
   }
 
   async paymentMethods(

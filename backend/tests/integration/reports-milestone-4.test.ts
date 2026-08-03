@@ -272,4 +272,78 @@ describe('Milestone 4 reporting', () => {
       ]),
     );
   });
+
+  it('reports open unfulfilled pre-order shortages against on-hand stock', async () => {
+    const { app, auth } = await setup('shortages');
+    const customer = await request(app)
+      .post('/api/v1/customers')
+      .set(auth)
+      .send({ name: 'Shortage customer', phone: '09100001004' });
+    const scarce = await request(app)
+      .post('/api/v1/products')
+      .set(auth)
+      .send({ sku: 'RPT-SHORT', name: 'Scarce product', priceMMK: 5_000, stockQty: 1 });
+    const covered = await request(app)
+      .post('/api/v1/products')
+      .set(auth)
+      .send({ sku: 'RPT-OK', name: 'Covered product', priceMMK: 5_000, stockQty: 10 });
+    expect(customer.status).toBe(201);
+    expect(scarce.status).toBe(201);
+    expect(covered.status).toBe(201);
+
+    const makePreorder = (productId: string, quantity: number) =>
+      request(app)
+        .post('/api/v1/orders')
+        .set(auth)
+        .send({
+          customerId: customer.body.customer.id,
+          type: 'PREORDER',
+          expectedFulfillAt: '2026-09-01',
+          delivery: {
+            customerName: 'Shortage customer',
+            customerPhone: '09100001004',
+            townshipOrCity: 'Yangon',
+            detailedAddress: 'No. 4',
+          },
+          lineItems: [{ productId, quantity }],
+        });
+
+    const confirmed = await makePreorder(scarce.body.product.id, 3);
+    const reserved = await makePreorder(scarce.body.product.id, 2);
+    const coveredOrder = await makePreorder(covered.body.product.id, 2);
+    const fulfilled = await makePreorder(scarce.body.product.id, 5);
+    expect(confirmed.status).toBe(201);
+    expect(reserved.status).toBe(201);
+    expect(coveredOrder.status).toBe(201);
+    expect(fulfilled.status).toBe(201);
+
+    await request(app)
+      .post(`/api/v1/orders/${reserved.body.order.id}/payments`)
+      .set(auth)
+      .send({ amountMMK: 3_000, method: 'CASH' })
+      .expect(201);
+
+    const prisma = createPrismaClient(getEnv());
+    await prisma.order.update({
+      where: { id: fulfilled.body.order.id },
+      data: { status: 'FULFILLED' },
+    });
+
+    const shortages = await request(app).get('/api/v1/reports/preorder-shortages').set(auth);
+    expect(shortages.status).toBe(200);
+    expect(shortages.body.shortages.items).toEqual([
+      expect.objectContaining({
+        productId: scarce.body.product.id,
+        orderedQty: 5,
+        availableQty: 1,
+        toOrderQty: 4,
+        preorderCount: 2,
+      }),
+    ]);
+    expect(shortages.body.shortages.items).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ productId: covered.body.product.id }),
+      ]),
+    );
+  });
 });

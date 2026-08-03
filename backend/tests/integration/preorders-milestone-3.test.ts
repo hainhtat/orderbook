@@ -299,4 +299,95 @@ describe('Milestone 3 pre-order lifecycle', () => {
       availableStock: 5,
     });
   });
+
+  it('exposes open pre-order demand on products and needsPreorderRestock filter', async () => {
+    const app = createApp({ env: getEnv() });
+    const register = await request(app).post('/api/v1/auth/register').send({
+      name: 'Demand owner',
+      email: 'preorder-demand-owner@example.com',
+      password: 'password123',
+    });
+    expect(register.status).toBe(201);
+    const auth = { Authorization: `Bearer ${register.body.accessToken as string}` };
+
+    await request(app).post('/api/v1/shops').set(auth).send({ name: 'Demand shop' }).expect(201);
+    const customer = await request(app)
+      .post('/api/v1/customers')
+      .set(auth)
+      .send({ name: 'Demand customer', phone: '09770009994' });
+    const scarce = await request(app)
+      .post('/api/v1/products')
+      .set(auth)
+      .send({ sku: 'DEMAND-1', name: 'Needs restock', priceMMK: 8_000, stockQty: 1 });
+    const plenty = await request(app)
+      .post('/api/v1/products')
+      .set(auth)
+      .send({ sku: 'DEMAND-2', name: 'Has enough', priceMMK: 8_000, stockQty: 20 });
+    expect(customer.status).toBe(201);
+    expect(scarce.status).toBe(201);
+    expect(plenty.status).toBe(201);
+
+    const makePreorder = (productId: string, quantity: number) =>
+      request(app)
+        .post('/api/v1/orders')
+        .set(auth)
+        .send({
+          customerId: customer.body.customer.id,
+          type: 'PREORDER',
+          expectedFulfillAt: '2026-08-20',
+          delivery: {
+            customerName: 'Demand customer',
+            customerPhone: '09770009994',
+            townshipOrCity: 'Yangon',
+            detailedAddress: 'No. 4',
+          },
+          lineItems: [{ productId, quantity }],
+        });
+
+    const first = await makePreorder(scarce.body.product.id, 3);
+    const second = await makePreorder(scarce.body.product.id, 2);
+    const covered = await makePreorder(plenty.body.product.id, 2);
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(covered.status).toBe(201);
+
+    const detail = await request(app)
+      .get(`/api/v1/products/${scarce.body.product.id}`)
+      .set(auth);
+    expect(detail.status).toBe(200);
+    expect(detail.body.product).toMatchObject({
+      openPreorderQty: 5,
+      openPreorderCount: 2,
+      preorderNeededQty: 4,
+    });
+
+    const list = await request(app).get('/api/v1/products').set(auth);
+    expect(list.status).toBe(200);
+    expect(list.body.products).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: scarce.body.product.id,
+          openPreorderQty: 5,
+          openPreorderCount: 2,
+          preorderNeededQty: 4,
+        }),
+        expect.objectContaining({
+          id: plenty.body.product.id,
+          openPreorderQty: 2,
+          openPreorderCount: 1,
+          preorderNeededQty: 0,
+        }),
+      ]),
+    );
+
+    const needsRestock = await request(app)
+      .get('/api/v1/products?needsPreorderRestock=true')
+      .set(auth);
+    expect(needsRestock.status).toBe(200);
+    expect(needsRestock.body.products).toHaveLength(1);
+    expect(needsRestock.body.products[0]).toMatchObject({
+      id: scarce.body.product.id,
+      preorderNeededQty: 4,
+    });
+  });
 });

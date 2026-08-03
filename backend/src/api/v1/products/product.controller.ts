@@ -6,17 +6,22 @@ export function createProductController(products: ProductService, categories: Ca
   return {
     list: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { includeArchived, q, categoryId, lowStock, page, limit } = matchedData(req) as {
-          includeArchived?: boolean;
-          q?: string;
-          categoryId?: string;
-          lowStock?: boolean; page?: number; limit?: number;
-        };
+        const { includeArchived, q, categoryId, lowStock, needsPreorderRestock, page, limit } =
+          matchedData(req) as {
+            includeArchived?: boolean;
+            q?: string;
+            categoryId?: string;
+            lowStock?: boolean;
+            needsPreorderRestock?: boolean;
+            page?: number;
+            limit?: number;
+          };
         const items = await products.list(req.shop!.shopId, {
           includeArchived,
           search: q,
           categoryId,
           lowStock,
+          needsPreorderRestock,
           page,
           limit,
         });

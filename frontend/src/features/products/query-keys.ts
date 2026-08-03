@@ -1,8 +1,14 @@
 export const productKeys = {
   all: ['products'] as const,
   lists: () => [...productKeys.all, 'list'] as const,
-  list: (includeArchived?: boolean) =>
-    [...productKeys.lists(), { includeArchived }] as const,
+  list: (includeArchived?: boolean, needsPreorderRestock?: boolean) =>
+    [
+      ...productKeys.lists(),
+      {
+        includeArchived: includeArchived ?? false,
+        needsPreorderRestock: needsPreorderRestock ?? false,
+      },
+    ] as const,
   details: () => [...productKeys.all, 'detail'] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
 }

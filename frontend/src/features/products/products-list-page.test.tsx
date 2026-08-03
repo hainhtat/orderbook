@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { renderApp } from '@/test/render'
 
@@ -66,5 +67,48 @@ describe('ProductsListPage', () => {
     expect(
       screen.getByRole('link', { name: /add your first product/i }),
     ).toHaveAttribute('href', '/products/new')
+  })
+
+  it('shows pre-order restock badge and needs-restock tab', async () => {
+    mockAuthenticatedFetch({
+      '/products': () => ({
+        products: [
+          {
+            id: 'prod-1',
+            sku: 'SKU-1',
+            name: 'Lip Gloss',
+            priceMMK: 5000,
+            stockQty: 2,
+            reservedQty: 0,
+            soldQuantity: 1,
+            salesRevenueMMK: 5000,
+            lowStockAt: null,
+            imageUrl: null,
+            isArchived: false,
+            categoryId: null,
+            openPreorderQty: 5,
+            openPreorderCount: 2,
+            preorderNeededQty: 3,
+          },
+        ],
+      }),
+      '/categories': () => ({ categories: [] }),
+    })
+    localStorage.setItem('order-notebook.accessToken', 'access-token')
+
+    const user = userEvent.setup()
+    renderApp(undefined, { initialRoute: '/products' })
+
+    await waitFor(() => {
+      expect(screen.getByText(/pre-order · need 3/i)).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole('tab', { name: /needs restock/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/need 3/i)).toBeInTheDocument()
+      expect(screen.getByText(/5 on pre-order/i)).toBeInTheDocument()
+      expect(screen.getByText(/2 in stock/i)).toBeInTheDocument()
+    })
   })
 })

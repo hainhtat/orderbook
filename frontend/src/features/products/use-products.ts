@@ -16,10 +16,15 @@ import type {
   UpdateProductInput,
 } from '@/features/products/types'
 
-export function useProducts(includeArchived = false, page = 1, limit = 20) {
+export function useProducts(
+  includeArchived = false,
+  page = 1,
+  limit = 20,
+  needsPreorderRestock = false,
+) {
   return useQuery({
-    queryKey: [...productKeys.list(includeArchived), page, limit],
-    queryFn: () => fetchProducts(includeArchived, page, limit),
+    queryKey: [...productKeys.list(includeArchived, needsPreorderRestock), page, limit],
+    queryFn: () => fetchProducts(includeArchived, page, limit, needsPreorderRestock),
   })
 }
 

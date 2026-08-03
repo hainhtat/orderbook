@@ -17,6 +17,12 @@ export type Product = {
   imageUrl: string | null
   isArchived: boolean
   categoryId: string | null
+  /** Sum of open unfulfilled pre-order line quantities */
+  openPreorderQty: number
+  /** Distinct open pre-orders including this product */
+  openPreorderCount: number
+  /** Units still needed: max(0, openPreorderQty - stockQty) */
+  preorderNeededQty: number
 }
 
 export type CreateProductInput = {

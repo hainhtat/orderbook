@@ -32,6 +32,7 @@ export const listProductsValidators = [
   query('q').optional().trim().isString(),
   query('categoryId').optional().isString(),
   query('lowStock').optional().isBoolean().toBoolean(),
+  query('needsPreorderRestock').optional().isBoolean().toBoolean(),
   query('page').optional().isInt({ min: 1 }).toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
 ];

@@ -138,8 +138,10 @@ export function AppHeader() {
         </div>
       </div>
       </header>
-      <div className="fixed inset-x-0 bottom-0 z-40 h-24 bg-background md:hidden" aria-hidden="true" />
-      <nav aria-label={t('navigation')} className="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-[calc(100vw-1.5rem)] items-center justify-around overflow-visible rounded-3xl border bg-card p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl md:hidden">
+      <nav
+        aria-label={t('navigation')}
+        className="fixed inset-x-3 bottom-[max(0.5rem,env(safe-area-inset-bottom,0px))] z-50 mx-auto flex max-w-[calc(100vw-1.5rem)] items-center justify-around overflow-visible rounded-3xl border bg-card p-1.5 shadow-2xl md:hidden"
+      >
         {[
           ['/dashboard', Home, t('nav.dashboard')],
           ['/orders', ClipboardList, t('nav.orders')],
@@ -150,7 +152,7 @@ export function AppHeader() {
               to === '/more' ? <div key={to as string} className="relative min-w-0 flex-1"><button type="button" aria-expanded={moreOpen} onClick={() => setMoreOpen((open) => !open)} className={cn('flex w-full flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[9px] font-semibold sm:text-[10px]', moreOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}><Icon className="h-5 w-5" /><span>{label as string}</span></button>{moreOpen ? <div className="absolute bottom-full right-0 mb-3 min-w-36 rounded-2xl border bg-card p-2 shadow-xl"><NavLink onClick={() => setMoreOpen(false)} to="/cashbook" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-accent"><BookOpen className="h-4 w-4" />{t('nav.cashbook')}</NavLink><NavLink onClick={() => setMoreOpen(false)} to="/reports" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-accent"><LineChart className="h-4 w-4" />{t('nav.reports')}</NavLink><NavLink onClick={() => setMoreOpen(false)} to="/settings" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-accent"><Settings className="h-4 w-4" />{t('nav.settings')}</NavLink></div> : null}</div> : <NavLink key={to as string} to={to as string} className={({ isActive }) => cn('flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[9px] font-semibold sm:text-[10px]', isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}><Icon className="h-5 w-5" /><span>{label as string}</span></NavLink>
         ))}
       </nav>
-      <button type="button" aria-label={t('nav.assistant')} onClick={() => setAssistantOpen(true)} className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6">
+      <button type="button" aria-label={t('nav.assistant')} onClick={() => setAssistantOpen(true)} className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom,0px))] right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6">
         <Bot className="h-6 w-6" />
       </button>
       <AssistantDialog open={assistantOpen} onOpenChange={setAssistantOpen} />

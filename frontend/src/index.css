@@ -90,8 +90,11 @@
     margin: 0;
     min-height: 100svh;
     overflow-x: hidden;
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    /* iOS < 11.2 uses constant(); newer uses env() */
+    padding-left: constant(safe-area-inset-left);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: constant(safe-area-inset-right);
+    padding-right: env(safe-area-inset-right, 0px);
     font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans Myanmar", sans-serif;
   }
 

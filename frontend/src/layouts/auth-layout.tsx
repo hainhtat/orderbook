@@ -4,12 +4,12 @@ import { ModeToggle } from '@/components/mode-toggle'
 
 export function AuthLayout() {
   return (
-    <div className="relative min-h-svh bg-muted/30 pt-[env(safe-area-inset-top)]">
-      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+    <div className="flex min-h-svh flex-col bg-muted/30">
+      <div className="flex shrink-0 justify-end gap-2 px-4 pb-2 pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]">
         <LanguageSwitcher />
         <ModeToggle />
       </div>
-      <div className="flex min-h-[calc(100svh-env(safe-area-inset-top))] items-center justify-center px-4 py-12 pb-[max(3rem,env(safe-area-inset-bottom))]">
+      <div className="flex flex-1 items-center justify-center px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom,0px))]">
         <div className="w-full max-w-md">
           <Outlet />
         </div>

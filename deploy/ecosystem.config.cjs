@@ -1,4 +1,4 @@
-# Order Notebook API — isolated PM2 process (does not touch other pm2 apps)
+// Order Notebook API — isolated PM2 process (does not touch other pm2 apps)
 module.exports = {
   apps: [
     {

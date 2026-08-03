@@ -39,6 +39,8 @@
 
 :root {
   --radius: 1rem;
+  /* Floating tab pill (~3.5rem) + shell padding + home indicator */
+  --mobile-tab-shell: calc(4.25rem + env(safe-area-inset-bottom, 0px));
   --background: oklch(0.97 0.012 280);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);

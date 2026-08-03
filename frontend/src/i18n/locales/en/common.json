@@ -26,7 +26,8 @@
     "assistant": "Assistant"
   },
   "errors": {
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "network": "Could not reach the server. Check your connection and try again."
   },
   "pwa": {
     "install": "Install app",

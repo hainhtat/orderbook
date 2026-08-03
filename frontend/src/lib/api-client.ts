@@ -113,11 +113,19 @@ export async function apiResponse(
     }
   }
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
-    ...rest,
-    headers: requestHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  })
+  let response: Response
+  try {
+    response = await fetch(`${env.apiBaseUrl}${path}`, {
+      ...rest,
+      headers: requestHeaders,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+  } catch {
+    throw new ApiError(0, {
+      message: i18n.t('common:errors.network'),
+      code: 'NETWORK_ERROR',
+    })
+  }
 
   if (
     response.status === 401 &&

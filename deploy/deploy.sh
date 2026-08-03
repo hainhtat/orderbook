@@ -23,6 +23,7 @@ set -a && source "${ENV_FILE}" && set +a
 
 : "${PUBLIC_ORIGIN:?PUBLIC_ORIGIN required in deploy/.env.deploy}"
 : "${VPS_API_PORT:=3010}"
+: "${VITE_API_BASE_URL:=/api/v1}"
 
 BACKEND_ENV="${ROOT}/backend/.env"
 if [[ ! -f "${BACKEND_ENV}" ]]; then
@@ -42,10 +43,10 @@ npm run db:generate:pg
 npm run db:push:pg
 npm run build
 
-echo "==> frontend build (${PUBLIC_ORIGIN}/api/v1)"
+echo "==> frontend build (${VITE_API_BASE_URL})"
 cd "${ROOT}/frontend"
 npm ci
-VITE_API_BASE_URL="${PUBLIC_ORIGIN}/api/v1" npm run build
+VITE_API_BASE_URL="${VITE_API_BASE_URL}" npm run build
 
 echo "==> pm2 (order-notebook-api only)"
 pm2 startOrReload "${ROOT}/deploy/ecosystem.config.cjs" --update-env

@@ -20,7 +20,7 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b-2 border-border bg-background/95 shadow-[0_2px_10px_rgba(15,23,42,0.06)] backdrop-blur supports-[backdrop-filter]:bg-background/75 dark:shadow-[0_2px_12px_rgba(0,0,0,0.22)]">
+      <header className="sticky top-0 z-40 border-b-2 border-border bg-background/95 pt-[env(safe-area-inset-top)] shadow-[0_2px_10px_rgba(15,23,42,0.06)] backdrop-blur supports-[backdrop-filter]:bg-background/75 dark:shadow-[0_2px_12px_rgba(0,0,0,0.22)]">
       <div className="mx-auto flex min-h-16 max-w-6xl items-center gap-3 px-4 sm:gap-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3 sm:gap-6">
           <span className="shrink-0 text-sm font-bold tracking-tight sm:text-base">

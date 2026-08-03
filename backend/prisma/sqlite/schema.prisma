@@ -111,6 +111,8 @@ model Shop {
   receiptFooter         String?      @default("Thank you for your order.")
   allowOversell         Boolean      @default(false)
   preorderDepositMinPct Int?         @default(30)
+  orderNumberPrefix     String?
+  orderNumberSeq        Int          @default(0)
   status                ShopStatus   @default(ACTIVE)
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt

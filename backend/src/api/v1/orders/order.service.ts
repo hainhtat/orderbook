@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from '../../../../generated/client/index.js';
+import { resolveOrderNumberPrefix } from '../../../domain/order-number-prefix.js';
 import { AppError } from '../../../errors/app-error.js';
 import { postCodCollectionFee, postPaymentToCashbook } from '../cashbook/cashbook.service.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';
@@ -122,11 +123,38 @@ async function generateOrderNumber(
   shopId: string,
 ): Promise<string> {
   const shop = await tx.shop.findUniqueOrThrow({ where: { id: shopId } });
-  const namePrefix = shop.name.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const slugPrefix = shop.slug.toLowerCase().split('-')[0]?.replace(/[^a-z0-9]/g, '');
-  const prefix = (namePrefix || slugPrefix || 'shop').slice(0, 12);
-  const count = await tx.order.count({ where: { shopId } });
-  return `${prefix}-${String(count + 1).padStart(3, '0')}`;
+  const prefix = resolveOrderNumberPrefix(shop);
+
+  // One-time bump after deploy: if seq was never used and orders exist, skip past them.
+  if (shop.orderNumberSeq === 0) {
+    const count = await tx.order.count({ where: { shopId } });
+    if (count > 0) {
+      await tx.shop.update({
+        where: { id: shopId },
+        data: { orderNumberSeq: count },
+      });
+    }
+  }
+
+  const maxAttempts = 3;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const updated = await tx.shop.update({
+      where: { id: shopId },
+      data: { orderNumberSeq: { increment: 1 } },
+    });
+    const orderNumber = `${prefix}-${String(updated.orderNumberSeq).padStart(3, '0')}`;
+    const existing = await tx.order.findFirst({
+      where: { shopId, orderNumber },
+      select: { id: true },
+    });
+    if (!existing) {
+      return orderNumber;
+    }
+  }
+
+  throw new AppError(ErrorCodes.CONFLICT, 409, [
+    { field: 'orderNumber', code: 'ORDER_NUMBER_COLLISION' },
+  ]);
 }
 
 const standardTransitions: Record<string, Set<string>> = {

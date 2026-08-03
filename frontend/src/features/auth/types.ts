@@ -12,6 +12,7 @@ export type Shop = {
   address?: string | null
   logoUrl?: string | null
   receiptFooter?: string | null
+  orderNumberPrefix?: string | null
 }
 
 export type AuthTokens = {
@@ -46,6 +47,7 @@ export type CreateShopInput = {
   address?: string
   logoUrl?: string
   receiptFooter?: string
+  orderNumberPrefix?: string
 }
 
 export type AuthState =

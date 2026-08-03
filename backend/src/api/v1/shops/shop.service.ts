@@ -1,6 +1,7 @@
 import type { PrismaClient, Shop } from '../../../../generated/client/index.js';
 import { AppError } from '../../../errors/app-error.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';
+import { deriveOrderNumberPrefix } from '../../../domain/order-number-prefix.js';
 
 function slugify(name: string): string {
   return name
@@ -18,6 +19,7 @@ export type PublicShop = {
   address: string | null;
   allowOversell: boolean;
   preorderDepositMinPct: number | null;
+  orderNumberPrefix: string | null;
   status: string;
   logoUrl: string | null;
   receiptFooter: string | null;
@@ -32,6 +34,7 @@ function toPublicShop(shop: Shop): PublicShop {
     address: shop.address,
     allowOversell: shop.allowOversell,
     preorderDepositMinPct: shop.preorderDepositMinPct,
+    orderNumberPrefix: shop.orderNumberPrefix,
     status: shop.status,
     logoUrl: shop.logoUrl,
     receiptFooter: shop.receiptFooter,
@@ -60,6 +63,8 @@ export class ShopService {
       slug = `${baseSlug}-${attempt}`;
     }
 
+    const orderNumberPrefix = deriveOrderNumberPrefix({ name: input.name, slug });
+
     const shop = await this.prisma.$transaction(async (tx) => {
       const created = await tx.shop.create({
         data: {
@@ -67,6 +72,7 @@ export class ShopService {
           slug,
           phone: input.phone,
           address: input.address,
+          orderNumberPrefix,
         },
       });
       await tx.shopMember.create({
@@ -96,6 +102,7 @@ export class ShopService {
       receiptFooter: string;
       allowOversell: boolean;
       preorderDepositMinPct: number;
+      orderNumberPrefix: string | null;
     }>,
   ): Promise<PublicShop> {
     const shop = await this.prisma.shop.update({

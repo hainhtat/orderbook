@@ -30,7 +30,9 @@ export function createShopController(shops: ShopService) {
 
     update: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
-        const data = matchedData(req) as Parameters<ShopService['updateShop']>[1];
+        const data = matchedData(req, {
+          includeOptionals: true,
+        }) as Parameters<ShopService['updateShop']>[1];
         const shop = await shops.updateShop(req.shop!.shopId, data);
         res.json({ shop });
       } catch (e) {

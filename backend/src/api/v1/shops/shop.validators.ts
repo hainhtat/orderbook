@@ -16,4 +16,19 @@ export const updateShopValidators = [
   body('receiptFooter').optional({ nullable: true }).isString().isLength({ max: 200 }).trim(),
   body('allowOversell').optional().isBoolean(),
   body('preorderDepositMinPct').optional().isInt({ min: 0, max: 100 }),
+  body('orderNumberPrefix')
+    .optional({ nullable: true })
+    .customSanitizer((value) => {
+      if (value === null || value === undefined) return value;
+      if (typeof value !== 'string') return value;
+      const normalized = value.trim().toLowerCase();
+      return normalized === '' ? null : normalized;
+    })
+    .custom((value) => {
+      if (value === null || value === undefined) return true;
+      if (typeof value !== 'string' || !/^[a-z0-9]{1,12}$/.test(value)) {
+        throw new Error('INVALID');
+      }
+      return true;
+    }),
 ];

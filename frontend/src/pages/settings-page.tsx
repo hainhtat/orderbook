@@ -18,6 +18,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -40,6 +41,10 @@ export function SettingsPage() {
     address: z.string().optional(),
     logoUrl: z.string().url(t('settings.logoUrlInvalid')).optional().or(z.literal('')),
     receiptFooter: z.string().max(200).optional(),
+    orderNumberPrefix: z
+      .string()
+      .max(12, t('settings.orderNumberPrefixInvalid'))
+      .regex(/^[a-z0-9]*$/i, t('settings.orderNumberPrefixInvalid')),
   })
 
   type SettingsFormValues = z.infer<typeof schema>
@@ -53,6 +58,7 @@ export function SettingsPage() {
       address: '',
       logoUrl: '',
       receiptFooter: 'Thank you for your order.',
+      orderNumberPrefix: '',
     },
   })
 
@@ -65,11 +71,13 @@ export function SettingsPage() {
         address: state.shop.address ?? '',
         logoUrl: state.shop.logoUrl ?? '',
         receiptFooter: state.shop.receiptFooter ?? 'Thank you for your order.',
+        orderNumberPrefix: state.shop.orderNumberPrefix ?? '',
       })
     }
   }, [form, state])
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const orderNumberPrefix = values.orderNumberPrefix.trim().toLowerCase()
     try {
       const shop = await updateCurrentShopRequest({
         name: values.name,
@@ -78,6 +86,7 @@ export function SettingsPage() {
         address: values.address || undefined,
         logoUrl: values.logoUrl || undefined,
         receiptFooter: values.receiptFooter?.trim() || 'Thank you for your order.',
+        orderNumberPrefix,
       })
       setShop(shop)
       toast.success(t('settings.saved'))
@@ -182,6 +191,35 @@ export function SettingsPage() {
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="orderNumberPrefix"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('settings.orderNumberPrefix')}</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder={t('settings.orderNumberPrefixPlaceholder')}
+                        autoComplete="off"
+                        spellCheck={false}
+                        {...field}
+                        onBlur={() => {
+                          field.onBlur()
+                          form.setValue(
+                            'orderNumberPrefix',
+                            field.value.trim().toLowerCase(),
+                            { shouldValidate: true, shouldDirty: true },
+                          )
+                        }}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t('settings.orderNumberPrefixHelp')}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

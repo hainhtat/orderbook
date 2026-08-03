@@ -53,8 +53,14 @@ pm2 save
 
 echo "==> nginx site pos.mmds.site (isolated vhost)"
 if [[ -d /etc/nginx/sites-available ]]; then
-  cp "${ROOT}/deploy/nginx-pos.conf" /etc/nginx/sites-available/pos.mmds.site
-  ln -sf /etc/nginx/sites-available/pos.mmds.site /etc/nginx/sites-enabled/pos.mmds.site
+  SITE="/etc/nginx/sites-available/pos.mmds.site"
+  # Do not overwrite an existing vhost — certbot manages SSL there.
+  if [[ ! -f "${SITE}" ]]; then
+    cp "${ROOT}/deploy/nginx-pos.conf" "${SITE}"
+    ln -sf "${SITE}" /etc/nginx/sites-enabled/pos.mmds.site
+  else
+    echo "    keeping existing ${SITE} (preserves SSL)"
+  fi
   nginx -t
   systemctl reload nginx
 fi

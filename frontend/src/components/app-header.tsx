@@ -139,18 +139,18 @@ export function AppHeader() {
       </div>
       </header>
       {/*
-        Native pattern: dock a full-width shell to the screen bottom (covers home
-        indicator + hides scrolling content). Keep the pill floating inside it.
+        Docked shell: short scrim only around the pill so short pages do not show
+        a large empty white slab. Safe-area stays under the pill as a slim strip.
       */}
       <div className="fixed inset-x-0 bottom-0 z-50 md:hidden">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[var(--mobile-tab-shell)] bg-gradient-to-t from-background from-40% via-background/90 to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[var(--mobile-tab-shell)] bg-gradient-to-t from-background via-background/50 to-transparent"
         />
-        <div className="relative px-3 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] pt-2">
+        <div className="relative px-3 pb-[calc(0.35rem+env(safe-area-inset-bottom,0px))] pt-1">
           <nav
             aria-label={t('navigation')}
-            className="mx-auto flex max-w-[calc(100vw-1.5rem)] items-center justify-around overflow-visible rounded-3xl border bg-card/95 p-1.5 shadow-2xl backdrop-blur-md"
+            className="mx-auto flex max-w-[calc(100vw-1.5rem)] items-center justify-around overflow-visible rounded-3xl border bg-card/95 p-1.5 shadow-lg backdrop-blur-md"
           >
             {[
               ['/dashboard', Home, t('nav.dashboard')],
@@ -168,7 +168,7 @@ export function AppHeader() {
         type="button"
         aria-label={t('nav.assistant')}
         onClick={() => setAssistantOpen(true)}
-        className="fixed bottom-[calc(var(--mobile-tab-shell)+0.75rem)] right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6"
+        className="fixed bottom-[calc(var(--mobile-tab-shell)+0.5rem)] right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6"
       >
         <Bot className="h-6 w-6" />
       </button>

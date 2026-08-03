@@ -54,7 +54,7 @@ pos/
 | i18n | i18next (`en`, `my`) | bundled resources (`en`, `my`) | `Accept-Language` errors |
 | Tests | Vitest + RTL | Jest + RNTL | Jest + Supertest |
 
-**AI assistant (planned M5):** DeepSeek (`deepseek-chat`) via OpenAI-compatible API; per-shop BYOK encrypted at rest.
+**AI assistant:** DeepSeek (`deepseek-chat`) via a developer-managed server-side API key. Staff never enter provider credentials.
 
 ---
 
@@ -73,7 +73,7 @@ pos/
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env: set JWT_SECRET, AI_ENCRYPTION_KEY, and optionally DEEPSEEK_API_KEY
+# Edit .env: set JWT_SECRET, AI_ENCRYPTION_KEY, and DEEPSEEK_API_KEY
 npm install
 npm run db:push
 npm run dev
@@ -134,9 +134,9 @@ For a physical device, set `EXPO_PUBLIC_API_BASE_URL` to your machine's LAN IP (
 | `DATABASE_URL` | Yes | SQLite path for dev (`file:./dev.db`) |
 | `JWT_SECRET` | Yes | Signing secret (16+ characters) |
 | `JWT_ISSUER` / `JWT_AUDIENCE` | Yes | Token validation claims |
-| `AI_ENCRYPTION_KEY` | Yes | 32+ chars; encrypts shop BYOK keys in DB |
+| `AI_ENCRYPTION_KEY` | Yes | 32+ chars; application secret |
 | `CORS_ORIGINS` | Yes | Comma-separated web/mobile dev origins |
-| `DEEPSEEK_API_KEY` | No | Dev LLM key (M5 assistant) |
+| `DEEPSEEK_API_KEY` | Yes for AI | Server-side DeepSeek key; never expose to shops |
 | `DEEPSEEK_MODEL` | No | Default `deepseek-chat` |
 
 See [`backend/.env.example`](backend/.env.example) for the full list.
@@ -200,7 +200,7 @@ pos/
 | **M2** | Standard orders & payments | Planned |
 | **M3** | Pre-orders & inventory reservation | Planned |
 | **M4** | Reporting | Planned |
-| **M5** | AI order assistant (DeepSeek BYOK) | Planned |
+| **M5** | AI order assistant (developer-managed DeepSeek) | Done |
 | **M6** | Hardening & pilot | Planned |
 
 ---

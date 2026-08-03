@@ -11,8 +11,8 @@ const envSchema = z.object({
   REFRESH_TOKEN_TTL: z.string().default('7d'),
   CORS_ORIGINS: z.string().default('http://localhost:5173'),
   AI_ENCRYPTION_KEY: z.string().min(32),
-  // Optional: DeepSeek for AI order assistant (dev fallback until shop BYOK is set in Settings)
-  AI_DEFAULT_PROVIDER: z.enum(['DEEPSEEK', 'OPENAI', 'ANTHROPIC', 'OTHER']).optional(),
+  // Developer-managed DeepSeek configuration. Credentials are never exposed to shops.
+  AI_DEFAULT_PROVIDER: z.enum(['DEEPSEEK']).default('DEEPSEEK'),
   DEEPSEEK_API_KEY: z.string().optional(),
   DEEPSEEK_BASE_URL: z.string().url().default('https://api.deepseek.com'),
   DEEPSEEK_MODEL: z.string().default('deepseek-chat'),

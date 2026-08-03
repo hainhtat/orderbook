@@ -42,17 +42,27 @@ export class AiService {
     await this.prisma.chatMessage.create({ data: { sessionId, role: 'user', content } });
     const apiKey = config?.apiKeyCipher ? decryptSecret(config.apiKeyCipher, this.encryptionKey) : fallbackKey!;
     const openOrders = await this.prisma.order.findMany({ where: { shopId, status: { notIn: ['DELIVERED', 'COMPLETED', 'CANCELLED'] } }, take: 50, select: { orderNumber: true, status: true, customerName: true, totalMMK: true, amountPaidMMK: true, expectedFulfillAt: true, type: true } });
-    const prompt = `You are a helpful shop operations assistant. Have a natural conversation, ask concise follow-up questions when customer/order details are missing, answer questions about this shop using only the context below, and proactively remind the staff about overdue deliveries, unpaid balances, and preorder stock shortages. If the user is clearly describing a new order, return ONLY JSON with keys customerId (string|null), newCustomer (object|null), lineItems ({productId,quantity}[]), notes (string), confidence (number 0..1). Otherwise return a helpful plain-text answer. Match only IDs in this tenant context.\nProducts: ${JSON.stringify(products)}\nCustomers: ${JSON.stringify(customers)}\nOpen orders: ${JSON.stringify(openOrders)}\nUser message: ${content}`;
+    const prompt = `You are a helpful shop operations assistant. Reply in the same language as the staff member; Burmese (Myanmar Unicode) is fully supported, and do not transliterate Burmese. Have a natural conversation, ask concise follow-up questions when customer/order details are missing, answer questions about this shop using only the context below, and proactively remind the staff about overdue deliveries, unpaid balances, and preorder stock shortages. If the user is clearly describing a new order, return ONLY JSON with keys customerId (string|null), newCustomer (object|null), lineItems ({productId,quantity}[]), notes (string), confidence (number 0..1). Otherwise return a helpful plain-text answer in the user's language. Match only IDs in this tenant context.\nProducts: ${JSON.stringify(products)}\nCustomers: ${JSON.stringify(customers)}\nOpen orders: ${JSON.stringify(openOrders)}\nUser message: ${content}`;
     const endpoint = provider === 'DEEPSEEK' ? (this.env?.DEEPSEEK_BASE_URL ?? 'https://api.deepseek.com') + '/chat/completions' : 'https://api.openai.com/v1/chat/completions';
     if (!['OPENAI', 'DEEPSEEK'].includes(provider)) throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'provider', code: 'AI_PROVIDER_NOT_SUPPORTED' }]);
     const response = await fetch(endpoint, { method: 'POST', headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' }, body: JSON.stringify({ model: config?.model || (provider === 'DEEPSEEK' ? 'deepseek-chat' : 'gpt-4.1-mini'), messages: [{ role: 'system', content: 'You draft shop orders when asked, but otherwise answer naturally. Never invent product or customer IDs.' }, { role: 'user', content: prompt }] }) });
     if (!response.ok) throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'provider', code: 'AI_PROVIDER_ERROR' }]);
     const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const raw = payload.choices?.[0]?.message?.content;
+    const raw = payload.choices?.[0]?.message?.content?.trim();
     if (!raw) throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'provider', code: 'AI_INVALID_RESPONSE' }]);
     let draft: unknown;
-    try { draft = JSON.parse(raw); } catch { await this.prisma.chatMessage.create({ data: { sessionId, role: 'assistant', content: raw } }); return { text: raw }; }
-    if (!draft || typeof draft !== 'object' || !Array.isArray((draft as { lineItems?: unknown }).lineItems)) throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'provider', code: 'AI_INVALID_RESPONSE' }]);
+    try {
+      const normalized = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+      draft = JSON.parse(normalized);
+    } catch {
+      await this.prisma.chatMessage.create({ data: { sessionId, role: 'assistant', content: raw } });
+      return { text: raw };
+    }
+    if (!draft || typeof draft !== 'object' || !Array.isArray((draft as { lineItems?: unknown }).lineItems)) {
+      const text = typeof draft === 'string' ? draft : raw;
+      await this.prisma.chatMessage.create({ data: { sessionId, role: 'assistant', content: text } });
+      return { text };
+    }
     const candidate = draft as { customerId?: unknown; newCustomer?: unknown; lineItems: Array<{ productId?: unknown; quantity?: unknown }>; notes?: unknown; confidence?: unknown };
     const productIds = new Set(products.map((product) => product.id));
     const customerIds = new Set(customers.map((customer) => customer.id));

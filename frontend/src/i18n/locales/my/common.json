@@ -27,5 +27,10 @@
   },
   "errors": {
     "generic": "တစ်ခုခု မှားယွင်းနေပါသည်။ ထပ်မံကြိုးစားပါ။"
+  },
+  "pwa": {
+    "install": "App install လုပ်မည်",
+    "updateAvailable": "ဗားရှင်းအသစ် အဆင်သင့်ဖြစ်ပါပြီ။",
+    "reload": "Reload"
   }
 }

@@ -315,6 +315,7 @@ export class OrderService {
       lineItems: Array<{ productId: string; quantity: number }>;
       type?: string;
       expectedFulfillAt?: string | null;
+      chatSessionId?: string;
     },
   ) {
     if (input.lineItems.length === 0) {
@@ -439,6 +440,7 @@ export class OrderService {
           townshipOrCity: input.delivery.townshipOrCity.trim(),
           detailedAddress: input.delivery.detailedAddress.trim(),
           addressLabel: input.delivery.addressLabel?.trim() || null,
+          chatSessionId: input.chatSessionId ?? null,
           createdByUserId: actorId,
           lineItems: { create: lineItems },
           status: isPreorder ? 'CONFIRMED' : 'TO_DELIVER',

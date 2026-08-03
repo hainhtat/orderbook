@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import { useUpdateAiConfig, useAiConfig } from '@/features/assistant/use-ai-config'
 import { updateCurrentShopRequest } from '@/features/auth/api'
 import { useAuth } from '@/features/auth/auth-provider'
 import { Button } from '@/components/ui/button'
@@ -23,11 +24,14 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { PwaInstallSettingsAction } from '@/components/pwa-install-prompt'
 import { ApiError } from '@/lib/api-error'
 
 export function SettingsPage() {
   const { t } = useTranslation('pages')
   const { state, setShop } = useAuth()
+  const { data: aiConfig } = useAiConfig()
+  const updateAiConfig = useUpdateAiConfig()
 
   const schema = z.object({
     name: z.string().min(1, t('settings.shopName')),
@@ -169,6 +173,60 @@ export function SettingsPage() {
               </Button>
             </form>
           </Form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{t('settings.aiTitle')}</CardTitle>
+          <CardDescription>{t('settings.aiDescription')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!aiConfig?.hasApiKey ? (
+            <p className="text-sm text-muted-foreground">{t('settings.aiOperatorManaged')}</p>
+          ) : (
+            <>
+              <label className="flex items-center justify-between gap-4 rounded-xl border p-4">
+                <div>
+                  <p className="font-medium">{t('settings.aiEnabled')}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {aiConfig.provider}
+                    {aiConfig.model ? ` · ${aiConfig.model}` : ''}
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-primary"
+                  checked={aiConfig.isEnabled}
+                  disabled={!aiConfig.canToggle}
+                  onChange={(event) => {
+                    void updateAiConfig(event.target.checked)
+                      .then(() => toast.success(t('settings.aiSaved')))
+                      .catch((error) =>
+                        toast.error(
+                          error instanceof ApiError || error instanceof Error
+                            ? error.message
+                            : t('settings.aiSaveError'),
+                        ),
+                      )
+                  }}
+                />
+              </label>
+              {!aiConfig.canToggle ? (
+                <p className="text-sm text-muted-foreground">{t('settings.aiOperatorManaged')}</p>
+              ) : null}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{t('settings.pwaTitle')}</CardTitle>
+          <CardDescription>{t('settings.pwaDescription')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PwaInstallSettingsAction />
         </CardContent>
       </Card>
     </div>

@@ -41,7 +41,7 @@ export function createV1Router(deps: V1Dependencies): Router {
   const orderService = new OrderService(deps.prisma);
   const reportService = new ReportService(deps.prisma);
   const cashbookService = new CashbookService(deps.prisma);
-  const aiService = new AiService(deps.prisma, deps.env.AI_ENCRYPTION_KEY, deps.env);
+  const aiService = new AiService(deps.prisma, deps.env.AI_ENCRYPTION_KEY, deps.env, orderService);
 
   router.use('/health', createHealthRouter());
   router.use('/auth', createAuthRouter(authService, authenticate));

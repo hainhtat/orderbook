@@ -1,7 +1,7 @@
 import { CalendarClock, ChevronRight, MapPin, PackageOpen, Plus, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,7 +46,8 @@ function getCardTone(order: Order, paymentStatus: PaymentDisplayStatus) {
 
 export function OrdersListPage() {
   const { t } = useTranslation('features')
-  const [search, setSearch] = useState('')
+  const [searchParams] = useSearchParams()
+  const [search, setSearch] = useState(() => searchParams.get('search') ?? '')
   const [status, setStatus] = useState<OrderStatus | 'ALL'>('TO_DELIVER')
   const [paymentStatus, setPaymentStatus] = useState<PaymentFilter>('ALL')
   const [channel, setChannel] = useState<'ALL' | 'MESSENGER' | 'PHONE' | 'IN_PERSON' | 'OTHER'>('ALL')
@@ -54,6 +55,13 @@ export function OrdersListPage() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const nextSearch = searchParams.get('search') ?? ''
+    setSearch(nextSearch)
+    setPage(1)
+  }, [searchParams])
+
   const filters = {
     search: search.trim() || undefined,
     status: status === 'ALL' ? undefined : status,

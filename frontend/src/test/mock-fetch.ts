@@ -46,6 +46,9 @@ export function mockAuthenticatedFetch(handlers: Record<string, () => unknown> =
     '/reports/preorder-pipeline': () => ({
       pipeline: { items: mockDashboardSnapshot.pipeline },
     }),
+    '/reports/preorder-shortages': () => ({
+      shortages: { items: mockDashboardSnapshot.preorderShortages },
+    }),
     '/products': () => ({
       products: [],
       pagination: { page: 1, limit: 1, total: mockDashboardSnapshot.lowStockCount, totalPages: 0 },

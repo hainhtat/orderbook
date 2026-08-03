@@ -66,22 +66,31 @@ describe('LoginPage', () => {
         })
       }
 
-      if (url.includes('/reports/sales-summary') || url.includes('/reports/preorder-pipeline')) {
+      if (
+        url.includes('/reports/sales-summary') ||
+        url.includes('/reports/preorder-pipeline') ||
+        url.includes('/reports/preorder-shortages')
+      ) {
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: async () =>
-            url.includes('/reports/preorder-pipeline')
-              ? { pipeline: { items: mockDashboardSnapshot.pipeline } }
-              : {
-                  summary: {
-                    from: '2026-01-01',
-                    to: '2026-01-01',
-                    groupBy: null,
-                    totals: mockDashboardSnapshot.today,
-                    buckets: [],
-                  },
-                },
+          json: async () => {
+            if (url.includes('/reports/preorder-pipeline')) {
+              return { pipeline: { items: mockDashboardSnapshot.pipeline } }
+            }
+            if (url.includes('/reports/preorder-shortages')) {
+              return { shortages: { items: mockDashboardSnapshot.preorderShortages } }
+            }
+            return {
+              summary: {
+                from: '2026-01-01',
+                to: '2026-01-01',
+                groupBy: null,
+                totals: mockDashboardSnapshot.today,
+                buckets: [],
+              },
+            }
+          },
         })
       }
 

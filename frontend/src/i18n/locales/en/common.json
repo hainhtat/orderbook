@@ -27,5 +27,10 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again."
+  },
+  "pwa": {
+    "install": "Install app",
+    "updateAvailable": "A new version is ready.",
+    "reload": "Reload"
   }
 }

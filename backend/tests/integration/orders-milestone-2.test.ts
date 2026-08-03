@@ -275,5 +275,21 @@ describe('Milestone 2 standard orders and payments', () => {
       paymentStatus: 'PAID',
       balanceDueMMK: 0,
     });
+
+    const paidOnly = await request(app)
+      .get('/api/v1/orders')
+      .query({ paymentStatus: 'PAID' })
+      .set(auth);
+    expect(paidOnly.status).toBe(200);
+    expect(paidOnly.body.orders).toHaveLength(1);
+    expect(paidOnly.body.pagination.total).toBe(1);
+
+    const unpaidAfterCollection = await request(app)
+      .get('/api/v1/orders')
+      .query({ paymentStatus: 'UNPAID' })
+      .set(auth);
+    expect(unpaidAfterCollection.status).toBe(200);
+    expect(unpaidAfterCollection.body.orders).toHaveLength(0);
+    expect(unpaidAfterCollection.body.pagination.total).toBe(0);
   });
 });

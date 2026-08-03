@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from '../../../../generated/sqlite/index.js';
 import { AppError } from '../../../errors/app-error.js';
+import { postCodCollectionFee, postPaymentToCashbook } from '../cashbook/cashbook.service.js';
 import { ErrorCodes } from '../../../errors/error-codes.js';
 
 export type DeliverySnapshot = {
@@ -121,13 +122,11 @@ async function generateOrderNumber(
   shopId: string,
 ): Promise<string> {
   const shop = await tx.shop.findUniqueOrThrow({ where: { id: shopId } });
-  const prefix = shop.slug.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'SHOP';
-  const year = new Date().getFullYear();
-  const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
-  const count = await tx.order.count({
-    where: { shopId, createdAt: { gte: startOfYear } },
-  });
-  return `${prefix}-${year}-${String(count + 1).padStart(4, '0')}`;
+  const namePrefix = shop.name.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const slugPrefix = shop.slug.toLowerCase().split('-')[0]?.replace(/[^a-z0-9]/g, '');
+  const prefix = (namePrefix || slugPrefix || 'shop').slice(0, 12);
+  const count = await tx.order.count({ where: { shopId } });
+  return `${prefix}-${String(count + 1).padStart(3, '0')}`;
 }
 
 const standardTransitions: Record<string, Set<string>> = {
@@ -156,43 +155,61 @@ export type ListOrdersOptions = {
 export class OrderService {
   constructor(private prisma: PrismaClient) {}
 
-  async list(shopId: string, options: ListOrdersOptions = {}) {
+  private buildListWhere(shopId: string, options: ListOrdersOptions): Prisma.OrderWhereInput {
     const q = options.search?.trim();
+    return {
+      shopId,
+      ...(options.status ? { status: options.status as 'TO_CONFIRM' } : {}),
+      ...(options.paymentMethod
+        ? { paymentMethod: options.paymentMethod as 'CASH' }
+        : {}),
+      ...(options.customerId ? { customerId: options.customerId } : {}),
+      ...(options.channel ? { channel: options.channel as 'MESSENGER' } : {}),
+      ...(options.preorderOnly
+        ? { type: 'PREORDER' }
+        : options.type
+          ? { type: options.type as 'STANDARD' }
+          : {}),
+      ...(options.from || options.to
+        ? {
+            createdAt: {
+              ...(options.from ? { gte: new Date(options.from) } : {}),
+              ...(options.to ? { lte: new Date(options.to) } : {}),
+            },
+          }
+        : {}),
+      ...(q
+        ? {
+            OR: [
+              { orderNumber: { contains: q } },
+              { customerName: { contains: q } },
+              { customerPhone: { contains: q } },
+              { channelReference: { contains: q } },
+            ],
+          }
+        : {}),
+    };
+  }
+
+  async list(shopId: string, options: ListOrdersOptions = {}) {
     const page = options.page ?? 1;
     const limit = options.limit ?? 25;
     const skip = (page - 1) * limit;
+
+    if (
+      options.paymentStatus === 'PAID' ||
+      options.paymentStatus === 'PARTIALLY_PAID'
+    ) {
+      return this.listWithDerivedPaymentStatus(shopId, options, page, limit, skip);
+    }
+
     const where: Prisma.OrderWhereInput = {
-        shopId,
-        ...(options.status ? { status: options.status as 'TO_CONFIRM' } : {}),
-        ...(options.paymentMethod
-          ? { paymentMethod: options.paymentMethod as 'CASH' }
-          : {}),
-        ...(options.customerId ? { customerId: options.customerId } : {}),
-        ...(options.channel ? { channel: options.channel as 'MESSENGER' } : {}),
-        ...(options.preorderOnly
-            ? { type: 'PREORDER' }
-          : options.type
-            ? { type: options.type as 'STANDARD' }
-            : {}),
-        ...(options.from || options.to
-          ? {
-              createdAt: {
-                ...(options.from ? { gte: new Date(options.from) } : {}),
-                ...(options.to ? { lte: new Date(options.to) } : {}),
-              },
-            }
-          : {}),
-        ...(q
-          ? {
-              OR: [
-                { orderNumber: { contains: q } },
-                { customerName: { contains: q } },
-                { customerPhone: { contains: q } },
-                { channelReference: { contains: q } },
-              ],
-            }
-          : {}),
+      ...this.buildListWhere(shopId, options),
+      ...(options.paymentStatus === 'UNPAID'
+        ? { amountPaidMMK: { lte: 0 } }
+        : {}),
     };
+
     const [total, orders] = await this.prisma.$transaction([
       this.prisma.order.count({ where }),
       this.prisma.order.findMany({
@@ -203,11 +220,66 @@ export class OrderService {
         take: limit,
       }),
     ]);
-    const publicOrders = orders.map(toPublicOrder);
-    const filtered = options.paymentStatus
-      ? publicOrders.filter((order) => order.paymentStatus === options.paymentStatus)
-      : publicOrders;
-    return { items: filtered, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+
+    return {
+      items: orders.map(toPublicOrder),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  private async listWithDerivedPaymentStatus(
+    shopId: string,
+    options: ListOrdersOptions,
+    page: number,
+    limit: number,
+    skip: number,
+  ) {
+    const paymentStatus = options.paymentStatus!;
+    const candidates = await this.prisma.order.findMany({
+      where: this.buildListWhere(shopId, options),
+      select: {
+        id: true,
+        amountPaidMMK: true,
+        totalMMK: true,
+        createdAt: true,
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+
+    const matchingIds = candidates
+      .filter((order) => {
+        const status =
+          order.amountPaidMMK <= 0
+            ? 'UNPAID'
+            : order.amountPaidMMK >= order.totalMMK
+              ? 'PAID'
+              : 'PARTIALLY_PAID';
+        return status === paymentStatus;
+      })
+      .map((order) => order.id);
+
+    const total = matchingIds.length;
+    const pageIds = matchingIds.slice(skip, skip + limit);
+    if (pageIds.length === 0) {
+      return {
+        items: [],
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    }
+
+    const orders = await this.prisma.order.findMany({
+      where: { id: { in: pageIds } },
+      include: { lineItems: true, payments: { orderBy: { createdAt: 'asc' } } },
+    });
+    const orderById = new Map(orders.map((order) => [order.id, order]));
+    const sorted = pageIds
+      .map((id) => orderById.get(id))
+      .filter((order): order is OrderRecord => Boolean(order));
+
+    return {
+      items: sorted.map(toPublicOrder),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async get(shopId: string, id: string) {
@@ -466,6 +538,32 @@ export class OrderService {
     return toPublicOrder(order);
   }
 
+  async bulkUpdatePreorderExpectedDate(
+    shopId: string,
+    orderIds: string[],
+    expectedFulfillAt: string,
+  ) {
+    const uniqueIds = [...new Set(orderIds)];
+    const orders = await this.prisma.order.findMany({
+      where: { id: { in: uniqueIds }, shopId, type: 'PREORDER' },
+      select: { id: true, status: true },
+    });
+    if (orders.length !== uniqueIds.length) {
+      throw new AppError(ErrorCodes.NOT_FOUND, 404);
+    }
+    if (orders.some((order) => ['COMPLETED', 'CANCELLED'].includes(order.status))) {
+      throw new AppError(ErrorCodes.CONFLICT, 409, [
+        { field: 'orderIds', code: 'ORDER_NOT_EDITABLE' },
+      ]);
+    }
+
+    const result = await this.prisma.order.updateMany({
+      where: { id: { in: uniqueIds }, shopId, type: 'PREORDER' },
+      data: { expectedFulfillAt: new Date(expectedFulfillAt) },
+    });
+    return { updatedCount: result.count };
+  }
+
   async transition(
     shopId: string,
     id: string,
@@ -485,8 +583,8 @@ export class OrderService {
       RESERVED: new Set(['READY_TO_FULFILL', 'CANCELLED']),
       AWAITING_STOCK: new Set(['RESERVED', 'CANCELLED']),
       READY_TO_FULFILL: new Set(['FULFILLED', 'CANCELLED']),
-      FULFILLED: new Set(['COMPLETED', 'CANCELLED']),
-      COMPLETED: new Set(['CANCELLED']),
+      FULFILLED: new Set(['COMPLETED']),
+      COMPLETED: new Set(),
       CANCELLED: new Set(),
     };
     const transitions = order.type === 'PREORDER' ? preorderTransitions : standardTransitions;
@@ -505,8 +603,9 @@ export class OrderService {
       ['TO_DELIVER', 'DELIVERING', 'DELIVERED'].includes(order.status) &&
       toStatus === 'CANCELLED';
     const shouldReserve = order.type === 'PREORDER' && toStatus === 'RESERVED';
-    const shouldRelease = order.type === 'PREORDER' && ['RESERVED', 'READY_TO_FULFILL', 'FULFILLED'].includes(order.status) && toStatus === 'CANCELLED';
+    const shouldRelease = order.type === 'PREORDER' && ['RESERVED', 'READY_TO_FULFILL'].includes(order.status) && toStatus === 'CANCELLED';
     const shouldConsumeReservation = order.type === 'PREORDER' && order.status === 'READY_TO_FULFILL' && toStatus === 'FULFILLED';
+    const shouldValidateStandardDelivery = order.type === 'STANDARD' && order.status === 'TO_DELIVER' && toStatus === 'DELIVERED';
     const quantityByProduct = new Map<string, number>();
     for (const item of order.lineItems) {
       if (item.productId) {
@@ -519,11 +618,17 @@ export class OrderService {
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const shop = await tx.shop.findUniqueOrThrow({ where: { id: shopId } });
+      if (shouldValidateStandardDelivery) {
+        for (const [productId] of quantityByProduct) {
+          const product = await tx.product.findFirst({ where: { id: productId, shopId } });
+          if (!product || product.stockQty < 0) throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'status', code: 'INSUFFICIENT_STOCK' }]);
+        }
+      }
       if (shouldReserve) {
         for (const [productId, quantity] of quantityByProduct) {
           const product = await tx.product.findFirst({ where: { id: productId, shopId } });
           if (!product) throw new AppError(ErrorCodes.NOT_FOUND, 404);
-          if (!shop.allowOversell && product.stockQty - product.reservedQty < quantity) {
+          if (product.stockQty - product.reservedQty < quantity) {
             throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'status', code: 'INSUFFICIENT_STOCK' }]);
           }
           await tx.product.update({ where: { id: productId }, data: { reservedQty: { increment: quantity } } });
@@ -538,7 +643,7 @@ export class OrderService {
       if (shouldConsumeReservation) {
         for (const [productId, quantity] of quantityByProduct) {
           const result = await tx.product.updateMany({
-            where: { id: productId, shopId, ...(shop.allowOversell ? {} : { stockQty: { gte: quantity } }), reservedQty: { gte: quantity } },
+            where: { id: productId, shopId, stockQty: { gte: quantity }, reservedQty: { gte: quantity } },
             data: { stockQty: { decrement: quantity }, reservedQty: { decrement: quantity } },
           });
           if (result.count === 0) throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'status', code: 'INSUFFICIENT_STOCK' }]);
@@ -639,6 +744,15 @@ export class OrderService {
           recordedBy: actorId,
         },
       });
+      await postPaymentToCashbook(tx, {
+        shopId,
+        orderId: id,
+        paymentId: payment.id,
+        method: payment.method,
+        amountMMK: payment.amountMMK,
+        note: payment.note,
+        actorId,
+      });
       const updated = await tx.order.update({
         where: { id },
         data: {
@@ -658,7 +772,7 @@ export class OrderService {
         let canReserve = true;
         for (const [productId, quantity] of byProduct) {
           const product = await tx.product.findFirst({ where: { id: productId, shopId } });
-          if (!product || (!(await tx.shop.findUniqueOrThrow({ where: { id: shopId } })).allowOversell && product.stockQty - product.reservedQty < quantity)) canReserve = false;
+          if (!product || product.stockQty - product.reservedQty < quantity) canReserve = false;
         }
         if (canReserve) {
           for (const [productId, quantity] of byProduct) {
@@ -691,6 +805,45 @@ export class OrderService {
       },
       order: toPublicOrder(result.order),
     };
+  }
+
+  async collectCod(
+    shopId: string,
+    id: string,
+    actorId: string,
+    input: { amountMMK: number; settlementMethod: string; feeMMK?: number; note?: string | null },
+  ) {
+    if (input.settlementMethod === 'COD') {
+      throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [
+        { field: 'settlementMethod', code: 'COD_REQUIRES_SETTLEMENT_METHOD' },
+      ]);
+    }
+    const result = await this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.findFirst({ where: { id, shopId }, include: { lineItems: true } });
+      if (!order) throw new AppError(ErrorCodes.NOT_FOUND, 404);
+      if (order.paymentMethod !== 'COD') {
+        throw new AppError(ErrorCodes.CONFLICT, 409, [{ field: 'paymentMethod', code: 'ORDER_NOT_COD' }]);
+      }
+      if (order.status === 'CANCELLED') throw new AppError(ErrorCodes.CONFLICT, 409, [{ field: 'status', code: 'ORDER_CANCELLED' }]);
+      const balance = order.totalMMK - order.amountPaidMMK;
+      if (input.amountMMK > balance || (input.feeMMK ?? 0) > input.amountMMK) {
+        throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [
+          { field: (input.feeMMK ?? 0) > input.amountMMK ? 'feeMMK' : 'amountMMK', code: (input.feeMMK ?? 0) > input.amountMMK ? 'FEE_EXCEEDS_COLLECTION' : 'PAYMENT_EXCEEDS_BALANCE' },
+        ]);
+      }
+      const method = input.settlementMethod as 'CASH' | 'BANK_TRANSFER' | 'KBZPAY_MANUAL' | 'WAVE_MANUAL' | 'OTHER';
+      const reserved = await tx.order.updateMany({
+        where: { id, shopId, amountPaidMMK: { lte: order.totalMMK - input.amountMMK } },
+        data: { amountPaidMMK: { increment: input.amountMMK } },
+      });
+      if (reserved.count !== 1) throw new AppError(ErrorCodes.VALIDATION_FAILED, 422, [{ field: 'amountMMK', code: 'PAYMENT_EXCEEDS_BALANCE' }]);
+      const payment = await tx.payment.create({ data: { orderId: id, shopId, amountMMK: input.amountMMK, method, note: input.note?.trim() || null, recordedBy: actorId } });
+      await postPaymentToCashbook(tx, { shopId, orderId: id, paymentId: payment.id, method: payment.method, amountMMK: payment.amountMMK, note: input.note, actorId });
+      await postCodCollectionFee(tx, { shopId, orderId: id, method: payment.method, feeMMK: input.feeMMK ?? 0, note: input.note, actorId });
+      const updated = await tx.order.findFirstOrThrow({ where: { id, shopId }, include: { lineItems: true, payments: { orderBy: { createdAt: 'asc' } } } });
+      return { payment, order: updated, feeMMK: input.feeMMK ?? 0 };
+    });
+    return { payment: { ...result.payment, createdAt: result.payment.createdAt.toISOString() }, order: toPublicOrder(result.order), feeMMK: result.feeMMK };
   }
 
   async history(shopId: string, id: string) {

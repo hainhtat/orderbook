@@ -10,6 +10,7 @@ const transition = vi.fn()
 vi.mock('@/features/orders/use-orders', () => ({
   useTransitionOrder: () => ({ isPending: false, mutateAsync: transition }),
   useRecordPayment: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useCollectCod: () => ({ isPending: false, mutateAsync: vi.fn() }),
 }))
 
 const codOrder: Order = {
@@ -49,9 +50,10 @@ describe('OrderActions', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Confirm' }))
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Record payment' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Collect COD' })).toBeInTheDocument()
     })
     expect(screen.getByLabelText('Amount (MMK)')).toHaveValue('14500')
-    expect(screen.getByRole('combobox', { name: 'Method' })).toHaveTextContent('Cash on delivery')
+    expect(screen.getByRole('combobox', { name: 'Method' })).toHaveTextContent('Cash')
+    expect(screen.getByLabelText('COD collection fee (optional)')).toBeInTheDocument()
   })
 })

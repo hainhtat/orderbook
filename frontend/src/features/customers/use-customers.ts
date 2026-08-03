@@ -27,10 +27,10 @@ export function useCustomer(id: string | undefined) {
   })
 }
 
-export function useCustomerOrders(id: string | undefined) {
+export function useCustomerOrders(id: string | undefined, page = 1, limit = 10) {
   return useQuery({
-    queryKey: customerKeys.orders(id ?? ''),
-    queryFn: () => fetchCustomerOrders(id!),
+    queryKey: [...customerKeys.orders(id ?? ''), page, limit],
+    queryFn: () => fetchCustomerOrders(id!, page, limit),
     enabled: Boolean(id),
   })
 }

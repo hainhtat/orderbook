@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -34,13 +35,16 @@ import { BackToListLink } from '@/components/back-to-list-link'
 export function CustomerDetailPage() {
   const { t } = useTranslation('features')
   const { id } = useParams<{ id: string }>()
+  const [ordersPage, setOrdersPage] = useState(1)
   const { data: customer, isLoading, isError, refetch } = useCustomer(id)
   const {
-    data: orders,
+    data: ordersResult,
     isLoading: ordersLoading,
     isError: ordersError,
-  } = useCustomerOrders(id)
+  } = useCustomerOrders(id, ordersPage, 10)
   const updateCustomer = useUpdateCustomer(id ?? '')
+  const orders = ordersResult?.orders
+  const ordersPagination = ordersResult?.pagination
 
   if (isLoading) {
     return (
@@ -73,6 +77,18 @@ export function CustomerDetailPage() {
           {customer.name}
         </h1>
         <p className="mt-2 text-muted-foreground">{customer.phone}</p>
+        {customer.lifetimeSpendMMK !== undefined ? (
+          <div className="mt-4 flex flex-wrap gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">{t('customers.lifetimeSpend')}: </span>
+              <span className="font-medium">{formatMMK(customer.lifetimeSpendMMK)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">{t('customers.openPreorders')}: </span>
+              <span className="font-medium">{customer.openPreorderCount ?? 0}</span>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <Card>
@@ -148,7 +164,12 @@ export function CustomerDetailPage() {
                 {orders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">
-                      {order.orderNumber}
+                      <Link
+                        to={`/orders/${order.id}`}
+                        className="hover:underline"
+                      >
+                        {order.orderNumber}
+                      </Link>
                     </TableCell>
                     <TableCell>{order.status}</TableCell>
                     <TableCell className="text-right">
@@ -161,6 +182,33 @@ export function CustomerDetailPage() {
                 ))}
               </TableBody>
             </Table>
+          ) : null}
+
+          {!ordersLoading && !ordersError && ordersPagination && ordersPagination.totalPages > 1 ? (
+            <div className="mt-4 flex items-center justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={ordersPage <= 1}
+                onClick={() => setOrdersPage((value) => value - 1)}
+              >
+                {t('customers.previousPage')}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {t('customers.pageOf', {
+                  page: ordersPage,
+                  total: ordersPagination.totalPages,
+                })}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={ordersPage >= ordersPagination.totalPages}
+                onClick={() => setOrdersPage((value) => value + 1)}
+              >
+                {t('customers.nextPage')}
+              </Button>
+            </div>
           ) : null}
         </CardContent>
       </Card>

@@ -2,6 +2,7 @@ import { Suspense, type ComponentType, type LazyExoticComponent } from 'react'
 import type { RouteObject } from 'react-router-dom'
 import {
   CustomerDetailPage,
+  CashbookPage,
   CustomersListPage,
   DashboardPage,
   LoginPage,
@@ -14,7 +15,9 @@ import {
   ProductDetailPage,
   ProductsListPage,
   RegisterPage,
+  ReportsPage,
   SettingsPage,
+  AssistantPage,
   ShopSetupPage,
 } from '@/app/lazy-pages'
 import {
@@ -122,6 +125,14 @@ export const appRoutes: RouteObject[] = [
                 element: lazyElement(PreordersPage),
               },
               {
+                path: '/reports',
+                element: lazyElement(ReportsPage),
+              },
+              {
+                path: '/cashbook',
+                element: lazyElement(CashbookPage),
+              },
+              {
                 path: '/orders/new',
                 element: lazyElement(OrderCreatePage),
               },
@@ -133,6 +144,7 @@ export const appRoutes: RouteObject[] = [
                 path: '/settings',
                 element: lazyElement(SettingsPage),
               },
+              { path: '/assistant', element: lazyElement(AssistantPage) },
             ],
           },
         ],

@@ -83,6 +83,13 @@ export type RecordPaymentInput = {
   note?: string;
 };
 
+export type CollectCodInput = {
+  amountMMK: number;
+  settlementMethod: Exclude<PaymentMethod, 'COD'>;
+  feeMMK?: number;
+  note?: string;
+};
+
 export type CreateOrderInput = {
   type?: 'STANDARD' | 'PREORDER';
   expectedFulfillAt?: string | null;
@@ -111,12 +118,18 @@ export type UpdateOrderInput = {
   lineItems?: Array<{ productId: string; quantity: number }>;
 };
 
+export type BulkPreorderExpectedDateInput = {
+  orderIds: string[];
+  expectedFulfillAt: string;
+};
+
 export type OrderFormLineItem = {
   productId: string;
   quantity: string;
 };
 
 export type OrderFormValues = {
+  printReceipt?: boolean;
   orderType: 'STANDARD' | 'PREORDER';
   expectedFulfillAt: string;
   customerId: string;

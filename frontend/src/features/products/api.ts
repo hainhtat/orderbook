@@ -7,6 +7,14 @@ import type {
   UpdateProductInput,
 } from '@/features/products/types'
 
+export function fetchLowStockProductCount() {
+  const params = new URLSearchParams({ lowStock: 'true', page: '1', limit: '1' })
+  return apiRequest<{
+    products: Product[]
+    pagination?: { page: number; limit: number; total: number; totalPages: number }
+  }>(`/products?${params}`).then((data) => data.pagination?.total ?? data.products.length)
+}
+
 export function fetchProducts(includeArchived = false, page = 1, limit = 20) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) })
   if (includeArchived) params.set('includeArchived', 'true')

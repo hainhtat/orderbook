@@ -10,6 +10,7 @@ export type Shop = {
   slug: string
   phone?: string | null
   address?: string | null
+  logoUrl?: string | null
 }
 
 export type AuthTokens = {
@@ -42,6 +43,7 @@ export type CreateShopInput = {
   slug?: string
   phone?: string
   address?: string
+  logoUrl?: string
 }
 
 export type AuthState =

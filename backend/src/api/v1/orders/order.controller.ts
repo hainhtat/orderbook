@@ -66,6 +66,23 @@ export function createOrderController(orders: OrderService) {
       }
     },
 
+    bulkPreorderExpectedDate: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const data = matchedData(req) as {
+          orderIds: string[];
+          expectedFulfillAt: string;
+        };
+        const result = await orders.bulkUpdatePreorderExpectedDate(
+          req.shop!.shopId,
+          data.orderIds,
+          data.expectedFulfillAt,
+        );
+        res.json(result);
+      } catch (e) {
+        next(e);
+      }
+    },
+
     payment: async (req: Request, res: Response, next: NextFunction) => {
       try {
         const { id, ...data } = matchedData(req) as {
@@ -81,6 +98,14 @@ export function createOrderController(orders: OrderService) {
       } catch (e) {
         next(e);
       }
+    },
+
+    collectCod: async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const { id, ...data } = matchedData(req) as { id: string } & Parameters<OrderService['collectCod']>[3];
+        const result = await orders.collectCod(req.shop!.shopId, id, req.user!.userId, data);
+        res.status(201).json(result);
+      } catch (e) { next(e); }
     },
 
     history: async (req: Request, res: Response, next: NextFunction) => {

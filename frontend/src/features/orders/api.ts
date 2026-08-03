@@ -1,5 +1,5 @@
 import { apiRequest } from '@/lib/api-client'
-import type { CreateOrderInput, Order, OrderFilters, OrderStatus, Payment, RecordPaymentInput, UpdateOrderInput } from '@/features/orders/types'
+import type { BulkPreorderExpectedDateInput, CollectCodInput, CreateOrderInput, Order, OrderFilters, OrderStatus, Payment, RecordPaymentInput, UpdateOrderInput } from '@/features/orders/types'
 export type Pagination = { page: number; limit: number; total: number; totalPages: number }
 
 export function fetchOrders(filters: OrderFilters = {}) {
@@ -29,6 +29,13 @@ export function updateOrder(id: string, input: UpdateOrderInput) {
   }).then((data) => data.order)
 }
 
+export function bulkUpdatePreorderExpectedDate(input: BulkPreorderExpectedDateInput) {
+  return apiRequest<{ updatedCount: number }>('/orders/preorders/bulk-expected-date', {
+    method: 'POST',
+    body: input,
+  })
+}
+
 export function transitionOrder(id: string, status: OrderStatus, note?: string) {
   return apiRequest<{ order: Order }>(`/orders/${id}/status`, {
     method: 'POST',
@@ -40,5 +47,11 @@ export function recordPayment(id: string, input: RecordPaymentInput) {
   return apiRequest<{ order: Order; payment: Payment }>(`/orders/${id}/payments`, {
     method: 'POST',
     body: input,
+  })
+}
+
+export function collectCod(id: string, input: CollectCodInput) {
+  return apiRequest<{ order: Order; payment: Payment; feeMMK: number }>(`/orders/${id}/collect-cod`, {
+    method: 'POST', body: input,
   })
 }

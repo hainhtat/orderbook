@@ -4,8 +4,10 @@ import { validateRequest } from '../../../middleware/validate-request.js';
 import { createOrderController } from './order.controller.js';
 import type { OrderService } from './order.service.js';
 import {
+  bulkPreorderExpectedDateValidators,
   createOrderValidators,
   createPaymentValidators,
+  collectCodValidators,
   listOrderValidators,
   orderIdValidator,
   transitionOrderValidators,
@@ -22,6 +24,22 @@ export function createOrderRouter(
 
   router.get('/', authenticate, tenant, listOrderValidators, validateRequest, controller.list);
   router.post('/', authenticate, tenant, createOrderValidators, validateRequest, controller.create);
+  router.post(
+    '/:id/collect-cod',
+    authenticate,
+    tenant,
+    collectCodValidators,
+    validateRequest,
+    controller.collectCod,
+  );
+  router.post(
+    '/preorders/bulk-expected-date',
+    authenticate,
+    tenant,
+    bulkPreorderExpectedDateValidators,
+    validateRequest,
+    controller.bulkPreorderExpectedDate,
+  );
   router.get('/:id', authenticate, tenant, orderIdValidator, validateRequest, controller.get);
   router.patch(
     '/:id',

@@ -1,8 +1,8 @@
 # Order Notebook App — Project Specification
 
-Status: Approved requirements baseline (pending stakeholder review)  
-Version: 1.6
-Date: 2026-07-27  
+Status: Approved requirements baseline
+Version: 1.13
+Date: 2026-08-03
 Primary market: Myanmar (MMK, English + Myanmar UI)
 
 ## 1. Project overview
@@ -11,7 +11,7 @@ Order Notebook is a **multi-tenant SaaS** shop management platform for Myanmar s
 
 The product is **staff-only** in version one. There is no customer-facing portal, storefront, or self-service checkout. The **web app is the active client priority**; mobile implementation is intentionally deferred to a later phase while the shared versioned API remains reusable for it.
 
-A distinguishing capability is an **AI-powered order-drafting assistant**: staff paste or type messenger-style messages, and the assistant proposes structured order drafts (customer, line items, quantities, notes) for human review before saving. Each shop brings its own LLM API key (**BYOK**).
+A distinguishing capability is an **AI-powered order-drafting assistant**: staff paste or type messenger-style messages, and the assistant proposes structured order drafts (customer, line items, quantities, notes) for human review before saving. The application operator manages the provider account and credentials centrally.
 
 ### 1.1 Problem statement
 
@@ -33,11 +33,13 @@ Myanmar shops often manage orders in notebooks, spreadsheets, and chat threads. 
 | Order channels (v1) | Messenger / social-led orders (recorded with channel metadata) |
 | Pre-order model | Deposit → reserve stock → fulfill on arrival → collect balance |
 | Payments (v1) | Manual payment recording; partial payments and deposits |
+| Sales recognition | Sales revenue and top-product sales include delivered standard orders and completed pre-orders only; open/booked orders are pipeline demand, not recognized revenue |
+| Cashbook | Record actual money movement separately from order status and recognized sales; order payments post automatically, while expenses and transfers are recorded explicitly |
 | Payment gateway | Out of scope v1; architecture allows future integration |
 | Inventory (v1) | Simple catalog: name, SKU, price, stock qty, category, image |
 | CRM (v1) | Basic: name, phone, address, notes, order history |
 | AI assistant (v1) | Draft orders from natural language; human confirmation required |
-| AI provider | BYOK per shop (encrypted API key storage) |
+| AI provider | Application-managed provider configured by the developer/operator through server secrets; shop staff never enter or access provider API keys |
 | Staff roles (v1) | Owner only (full shop access) |
 | Client platforms (current phase) | Web-first; mobile deferred to later phases |
 | Project layout | Independent `frontend/`, `backend/`, and `mobile/` projects (no monorepo) |
@@ -111,10 +113,18 @@ Baseline targets will be set after 30 days of pilot usage.
 - Reserve stock on deposit confirmation.
 - Notify-ready state when stock available (in-app indicator; push deferred).
 - Fulfillment marks items delivered; balance due surfaced before completion.
+- Owner-facing work queues simplify the technical lifecycle into needs payment, waiting for stock, ready to deliver, and balance to collect; active orders can be rescheduled in bulk.
+
+**Cashbook foundation**
+
+- Accounts for cash, bank, KBZPay, Wave Money, COD clearing, and other payment stores.
+- Order payments and deposits automatically create immutable cashbook inflows linked to the order and payment.
+- Owner can record manual income, expenses, transfers, opening balances, and reversal entries.
+- Account balances, date-range cash flow summary, and recent transaction list are tenant-scoped.
 
 **AI assistant**
 
-- Per-shop encrypted BYOK configuration (provider enum + API key).
+- Application-managed AI provider configuration from server-side secrets; no shop-facing credential form.
 - Chat UI: staff pastes messenger text or describes order in natural language (EN or MY).
 - Assistant returns structured **draft** (customer match suggestions, line items, quantities, notes).
 - Staff edits draft, then explicitly confirms save — no silent auto-commit.
@@ -270,6 +280,8 @@ One owner account per shop in v1. Full access within their tenant.
 | PRE-06 | Fulfillment records delivery/handoff; status → `FULFILLED`; surface `balanceDue`. |
 | PRE-07 | On final balance payment: status → `COMPLETED`. |
 | PRE-08 | Cancellation rules: deposit forfeiture note field; release reservations; optional partial refund payment record. |
+| PRE-09 | Pre-order operations expose actionable queues for payment, stock, delivery, and balance collection, with due/overdue indicators. |
+| PRE-10 | Owner can update expected fulfillment dates for up to 100 active pre-orders in one operation. |
 
 ### 5.6 Payments
 
@@ -280,12 +292,25 @@ One owner account per shop in v1. Full access within their tenant.
 | PAY-03 | Support multiple partial payments per order. |
 | PAY-04 | Display deposit, total paid, balance due on order detail. |
 | PAY-05 | Derive payment status independently from fulfillment: `UNPAID`, `PARTIALLY_PAID`, or `PAID`. A `COD` order remains `UNPAID` until collection is recorded as a payment. |
+| PAY-06 | COD collection records the gross amount received, the actual settlement destination (`CASH`, `BANK_TRANSFER`, `KBZPAY_MANUAL`, `WAVE_MANUAL`, or `OTHER`), and an optional collection fee. `COD` is the order arrangement, not the final receipt account. |
+
+### 5.6.1 Cashbook foundation
+
+| ID | Requirement |
+| --- | --- |
+| CASH-01 | Owner can create and view tenant-scoped cash accounts for cash, bank, KBZPay, Wave Money, COD clearing, and other stores. |
+| CASH-02 | Every recorded order payment creates one immutable `IN` cashbook entry linked to its payment and order. |
+| CASH-03 | Owner can record immutable manual income, expenses, account transfers, opening balances, and reversal entries. |
+| CASH-04 | Owner can view account balances, date-range money-in/money-out/net summary, and recent transactions. |
+| CASH-05 | Staff daily report shows completed/delivered orders, products and quantities sent, recipient/customer details, money received, reported expenses, and net cash for a selected Myanmar business date. |
+| CASH-06 | COD settlement atomically posts gross payment money-in and an optional linked `COD_COLLECTION_FEE` expense to the selected destination account, so account balances reflect net proceeds without reducing recognized sales. |
+| CASH-07 | The COD clearing account is presented as `COD remaining`; collected COD is posted only to the selected settlement wallet or cash account. |
 
 ### 5.7 AI order assistant
 
 | ID | Requirement |
 | --- | --- |
-| AI-01 | Shop owner configures provider (`OPENAI`, `ANTHROPIC`, `OTHER`) and API key; key encrypted at rest. |
+| AI-01 | The application operator configures the AI provider and API key through deployment secrets; shop staff cannot enter, view, or change provider credentials. |
 | AI-02 | Chat session per drafting flow; messages stored for audit (retention policy configurable). |
 | AI-03 | User submits free-text; backend calls LLM with shop-scoped tool context: product list (name, SKU, price, stock), customer search by phone/name fragment. |
 | AI-04 | Response is `OrderDraft` JSON: suggested `customerId` or `newCustomer`, `lineItems[]`, `notes`, `confidence` hints. |
@@ -297,8 +322,8 @@ One owner account per shop in v1. Full access within their tenant.
 
 | ID | Requirement |
 | --- | --- |
-| RPT-01 | Sales summary for day/week/month with order count and revenue. |
-| RPT-02 | Top N products by revenue and quantity for selected period. |
+| RPT-01 | Recognized-sales summary for day/week/month with order count and revenue; include `DELIVERED` standard orders and `COMPLETED` pre-orders only. |
+| RPT-02 | Top N products by recognized revenue and quantity for the selected period, using the same status rule as RPT-01. |
 | RPT-03 | Pre-order pipeline counts and deposit/balance totals by status. |
 | RPT-04 | Payment method breakdown for period. |
 | RPT-05 | Export orders CSV for date range (owner only). |
@@ -638,6 +663,7 @@ Base path: `/api/v1`. All shop routes require `Authorization: Bearer <access_tok
 | GET/PATCH | `/orders/:id` | Detail / update (limited fields); responses include delivery snapshot fields, `paymentMethod`, and derived `paymentStatus`. |
 | POST | `/orders/:id/status` | Transition status (validated FSM) |
 | POST | `/orders/:id/payments` | Record payment |
+| POST | `/orders/:id/collect-cod` | Settle COD into cash, bank, KBZPay, Wave, or another account and record an optional collection fee |
 | GET | `/orders/:id/history` | Status audit trail |
 
 ### 8.6 AI assistant
@@ -656,17 +682,29 @@ Base path: `/api/v1`. All shop routes require `Authorization: Bearer <access_tok
 | GET | `/reports/sales-summary` | Query: `from`, `to`, `groupBy` |
 | GET | `/reports/top-products` | Query: `from`, `to`, `limit` |
 | GET | `/reports/preorder-pipeline` | Counts and MMK totals by status |
+| GET | `/reports/preorder-shortages` | Outstanding pre-order quantities that exceed available stock |
 | GET | `/reports/payment-methods` | Breakdown by method |
 | GET | `/reports/orders/export` | CSV stream |
 
-### 8.8 Platform ops (internal)
+### 8.8 Cashbook
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET/POST | `/cashbook/accounts` | List or create cash accounts |
+| GET/POST | `/cashbook/entries` | List or record manual cashbook entries |
+| GET | `/cashbook/summary` | Date-range money-in, money-out, and net cash flow |
+| GET | `/cashbook/daily-report` | Staff daily sales, fulfillment, receipts, and expenses for one business date |
+| POST | `/cashbook/transfers` | Record paired transfer-out/transfer-in entries |
+| POST | `/cashbook/entries/:id/reverse` | Create an immutable reversing entry |
+
+### 8.9 Platform ops (internal)
 
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/platform/shops` | Search shops (operator auth) |
 | POST | `/platform/shops/:id/suspend` | Suspend tenant |
 
-### 8.9 Error contract
+### 8.10 Error contract
 
 Stable JSON envelope per backend starter skill: `code`, localized `message`, optional `details`, `requestId`. Locale from `Accept-Language` (`en` | `my`).
 
@@ -683,6 +721,8 @@ Stable JSON envelope per backend starter skill: `code`, localized `message`, opt
 - **Direct controls**: language and theme controls toggle immediately on click; list-return actions use prominent icon-labelled links with mobile-friendly touch targets.
 - **Progressive pre-order entry**: standard orders remain the default; selecting the Pre-order checkbox reveals the expected fulfillment date.
 - **Shop identity**: authenticated staff screens display the active shop name rather than the account username.
+- **Queue-first orders**: the orders screen opens on `TO_DELIVER`; fulfillment and payment filters show live counts, with COD count surfaced separately for collection work while COD remains included in unpaid totals.
+- **Mobile safe area**: the responsive web console reserves scroll space beneath the fixed bottom tab bar so content and actions never sit underneath it; the mobile bar includes Dashboard/Home.
 
 ### 9.2 Web information architecture
 
@@ -696,6 +736,7 @@ Stable JSON envelope per backend starter skill: `code`, localized `message`, opt
 ├── /customers
 ├── /products
 ├── /reports
+├── /cashbook
 ├── /assistant          # AI order chat
 └── /settings           # shop, AI key, theme, language
 /auth/login, /auth/register
@@ -723,7 +764,7 @@ stateDiagram-v2
   TO_DELIVER --> CANCELLED: restore deducted stock
 ```
 
-Payment is an independent axis. `COD` identifies how payment is expected; it remains `UNPAID` until the shop records collection. When an unpaid COD order is marked `DELIVERED`, the web immediately prompts the owner to record the remaining payment. The prompt is dismissible so delivery completion is never blocked by payment entry.
+Payment is an independent axis. `COD` identifies how payment is expected; it remains `UNPAID` until the shop records collection. When an unpaid COD order is marked `DELIVERED`, the web immediately opens one collection action. Staff select how the rider or delivery service paid the shop (cash, bank, KBZPay, Wave, or other) and may enter a collection fee as a percentage or MMK amount. The system records gross payment and fee expense together while showing the resulting net receipt. The prompt is dismissible so delivery completion is never blocked by payment entry.
 
 ### 9.5 Pre-order fulfillment lifecycle
 
@@ -876,6 +917,14 @@ Client → POST /ai/sessions/:id/messages
 
 **Exit criteria:** Owner views reports matching §5.8 for a date range.
 
+### Milestone 4.1 — Pre-order operations & cashbook foundation (week 10)
+
+- Recognized sales grouped by delivery/completion event date.
+- Actionable pre-order work queues, urgency indicators, and bulk expected-date updates.
+- Cash accounts, automatic payment posting and legacy-payment backfill, daily staff reporting, manual expenses such as taxi/delivery fees, transfers, reversals, and cash flow summary.
+
+**Exit criteria:** Owner can work a high-volume pre-order queue from next action to balance collection and reconcile recorded money movement by account.
+
 ### Milestone 5 — AI assistant (weeks 10–11)
 
 - BYOK settings UI (encrypted storage).
@@ -907,7 +956,9 @@ Client → POST /ai/sessions/:id/messages
 
 | Item | Resolution |
 | --- | --- |
-| Reporting depth | MVP set in §5.8 recommended; stakeholder deferred — confirm before Milestone 4. |
+| Reporting depth | MVP set in §5.8 confirmed. Sales metrics recognize delivered standard orders and completed pre-orders only; open orders remain pipeline demand. |
+| Pre-order operations | Actionable queues and bulk date updates are implemented; supplier/inbound batch allocation and customer notifications remain future work. |
+| Cashbook UI depth | Account, summary, staff daily report, recent-entry, and quick daily-expense web surfaces are implemented; transfer/reversal actions are API-ready but dedicated UI controls remain follow-up work. |
 | Additional order channels | Messenger primary; `PHONE` and `IN_PERSON` enums supported for manual tagging. |
 | Staff roles beyond owner | Deferred; `ShopMemberRole` enum extensible. |
 | Product images | URL or upload to object storage; max size TBD in implementation. |

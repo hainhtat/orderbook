@@ -1,59 +1,43 @@
-# Global Workspace Rules for Order Notebook
+# Order Notebook — project overlay
 
-You are the **primary orchestrator** for the **Order Notebook** application (multi-tenant SaaS for cosmetic online shops). Route specialized work to subagents when it clearly fits their scope; otherwise implement directly.
+You are the **primary orchestrator** for **Order Notebook**. Follow the global **orchestrator** skill (`~/.cursor/skills/orchestrator/SKILL.md`) and delegate to subagents in `.cursor/agents/`.
 
-## 1. Source of truth
+## Spec discipline (mandatory)
 
-* `PROJECT_SPEC.md` is the authoritative requirements baseline.
-* Read the relevant spec sections before writing code, migrations, or APIs.
-* **Do not** edit `PROJECT_SPEC.md` or `PROJECT_SPEC.html` yourself — delegate to `@spec-maintainer`.
+**`PROJECT_SPEC.md` is the source of truth.** Every feature task follows this order:
 
-## 2. Tech stack
+1. **Read** the relevant spec sections (requirements §5, API §8, UI §9, milestones §11) before writing code.
+2. **Implement** only what the spec defines. Do not add routes, APIs, or screens that are not in the spec without stakeholder approval and a `@spec-maintainer` sync first.
+3. **Fix code when drifted** — if implementation diverges from the spec, align code to the spec; do not edit the spec to match accidental drift.
+4. **Invoke `@spec-maintainer`** after intentional contract changes, milestone completion, or when the user approves new behavior that must be recorded in the spec.
+5. **Do not** edit `PROJECT_SPEC.md` or `PROJECT_SPEC.html` yourself — only `@spec-maintainer` may change them.
 
-| App | Stack |
+## Project context
+
+- Read **`.cursor/project.md`** for paths, stack, and active/deferred apps.
+- Read **`TASKS.md`** and **`PROGRESS.md`** when present.
+
+## Subagents
+
+Shared agents are symlinked from **agent-kit** (`~/Developer/agent-kit`). Local override: `spec-maintainer.md` (Order Notebook–specific checklists).
+
+| Subagent | Scope |
 | --- | --- |
-| **Web** (`frontend/`) | React, Vite, TypeScript, React Query, React Router, React Hook Form, shadcn/ui, Tailwind |
-| **Backend** (`backend/`) | Express, TypeScript, Prisma, SQLite (dev) / PostgreSQL (prod), JWT |
-| **Mobile** (`mobile/`) | React Native, Expo, Expo Router, Expo UI |
-| **AI assistant** | DeepSeek (`deepseek-chat`) via OpenAI-compatible API; per-shop BYOK in production |
+| `@backend-developer` | `backend/` |
+| `@frontend-developer` | `frontend/` |
+| `@mobile-developer` | `mobile/` (deferred unless user reactivates) |
+| `@spec-maintainer` | Spec sync — local file |
+| `@test-reviewer` | Tests only |
+| `@verifier` | Read-only spec check |
+| `@auditor` | `audit/reports/` |
 
-Follow conventions in `.cursor/skills/` (frontend-starter, backend-starter, mobile-starter, test).
+## Global skills
 
-### Skill usage
+Installed via `agent-kit/scripts/install-global.sh` → `~/.cursor/skills/`:
 
-- Use `frontend-starter`, `backend-starter`, and `mobile-starter` when scaffolding or standardizing the corresponding app.
-- Use `test` when implementing or reviewing behavior that needs a small, high-value set of focused tests. Prefer it for regressions, critical business logic, public APIs, and edge cases; avoid exhaustive or low-value coverage.
+`orchestrator`, `backend-starter`, `frontend-starter`, `mobile-starter`, `test`
 
-## 3. Subagent routing (`.cursor/agents/`)
+## AI assistant
 
-Delegate proactively when a task is mostly within one app's boundary:
-
-| Subagent | Scope | Invoke when |
-| --- | --- | --- |
-| `@backend-developer` | `backend/` | API routes, Prisma schema/migrations, services, auth, AI backend, tests |
-| `@frontend-developer` | `frontend/` | React pages, shadcn/ui, React Query hooks, forms, i18n, theme, web tests |
-| `@mobile-developer` | `mobile/` | Expo Router screens, Expo UI, mobile auth, i18n, theme, mobile tests |
-| `@spec-maintainer` | `PROJECT_SPEC.md` | Milestone completion, schema/API contract changes, intentional architecture drift |
-
-### Routing rules
-
-1. **Stay in lane** — Do not implement large `backend/` changes while acting as frontend specialist (and vice versa). Split cross-cutting features: backend API first, then web + mobile clients.
-2. **Spec edits** — Any update to `PROJECT_SPEC.md` / `PROJECT_SPEC.html` goes to `@spec-maintainer` only.
-3. **Multi-step features** — Break work by milestone and app; state which subagent owns each step (e.g. orders FSM → `@backend-developer`, then `@frontend-developer` + `@mobile-developer`).
-4. **Small cross-app fixes** — The orchestrator may apply minimal contract-alignment fixes (shared types, env docs) without delegating.
-
-## 4. AI assistant (DeepSeek)
-
-* **Model:** `deepseek-chat` (order drafting, structured JSON drafts).
-* **Server-side only** — API keys live in `backend/.env` for dev or per-shop BYOK (encrypted) in production. Never put LLM keys in `frontend/` or `mobile/` `EXPO_PUBLIC_*` / `VITE_*` vars.
-* **Required backend env:** `AI_ENCRYPTION_KEY` (32+ chars). **Dev LLM:** `DEEPSEEK_API_KEY` in `backend/.env` (see `backend/.env.example`).
-
-## 5. Environment files
-
-| File | Purpose |
-| --- | --- |
-| `backend/.env` | Database, JWT, CORS, `AI_ENCRYPTION_KEY`, `DEEPSEEK_API_KEY` |
-| `frontend/.env` | `VITE_API_BASE_URL` only |
-| `mobile/.env` | `EXPO_PUBLIC_API_BASE_URL` only |
-
-Copy from each app's `.env.example`. Do not commit `.env` files.
+- Model: `deepseek-chat` (server-side only).
+- Never put LLM keys in `VITE_*` or `EXPO_PUBLIC_*` vars.

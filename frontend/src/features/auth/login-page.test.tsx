@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { mockDashboardSnapshot } from '@/test/mock-fetch'
 import { renderApp } from '@/test/render'
 
 describe('LoginPage', () => {
@@ -27,37 +28,85 @@ describe('LoginPage', () => {
   })
 
   it('submits credentials and navigates on success', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          user: {
-            id: 'user-1',
-            name: 'Test Owner',
-            email: 'owner@example.com',
-          },
-          accessToken: 'access-token',
-          refreshToken: 'refresh-token',
-        }),
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+
+      if (url.includes('/auth/login')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            user: {
+              id: 'user-1',
+              name: 'Test Owner',
+              email: 'owner@example.com',
+            },
+            accessToken: 'access-token',
+            refreshToken: 'refresh-token',
+          }),
+        })
+      }
+
+      if (url.includes('/auth/verify')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            user: {
+              id: 'user-1',
+              name: 'Test Owner',
+              email: 'owner@example.com',
+            },
+            shop: {
+              id: 'shop-1',
+              name: 'Test Shop',
+              slug: 'test-shop',
+            },
+          }),
+        })
+      }
+
+      if (url.includes('/reports/sales-summary') || url.includes('/reports/preorder-pipeline')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () =>
+            url.includes('/reports/preorder-pipeline')
+              ? { pipeline: { items: mockDashboardSnapshot.pipeline } }
+              : {
+                  summary: {
+                    from: '2026-01-01',
+                    to: '2026-01-01',
+                    groupBy: null,
+                    totals: mockDashboardSnapshot.today,
+                    buckets: [],
+                  },
+                },
+        })
+      }
+
+      if (url.includes('/products')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({
+            products: [],
+            pagination: {
+              page: 1,
+              limit: 1,
+              total: mockDashboardSnapshot.lowStockCount,
+              totalPages: 0,
+            },
+          }),
+        })
+      }
+
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: async () => ({ error: { message: 'Not found' } }),
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          user: {
-            id: 'user-1',
-            name: 'Test Owner',
-            email: 'owner@example.com',
-          },
-          shop: {
-            id: 'shop-1',
-            name: 'Test Shop',
-            slug: 'test-shop',
-          },
-        }),
-      })
+    })
 
     vi.stubGlobal('fetch', fetchMock)
 

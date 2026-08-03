@@ -105,9 +105,23 @@ export const transitionOrderValidators = [
   body('note').optional({ nullable: true }).trim().isString(),
 ];
 
+export const bulkPreorderExpectedDateValidators = [
+  body('orderIds').isArray({ min: 1, max: 100 }),
+  body('orderIds.*').isString().notEmpty(),
+  body('expectedFulfillAt').isISO8601(),
+];
+
 export const createPaymentValidators = [
   param('id').isString().notEmpty(),
   body('amountMMK').isInt({ min: 1 }),
   body('method').isIn(paymentMethods),
+  body('note').optional({ nullable: true }).trim().isString(),
+];
+
+export const collectCodValidators = [
+  param('id').isString().notEmpty(),
+  body('amountMMK').isInt({ min: 1 }),
+  body('settlementMethod').isIn(['CASH', 'BANK_TRANSFER', 'KBZPAY_MANUAL', 'WAVE_MANUAL', 'OTHER']),
+  body('feeMMK').optional().isInt({ min: 0 }),
   body('note').optional({ nullable: true }).trim().isString(),
 ];

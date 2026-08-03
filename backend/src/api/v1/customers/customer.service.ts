@@ -18,6 +18,21 @@ export type PublicCustomer = {
   } | null;
 };
 
+export type CustomerDetail = PublicCustomer & {
+  lifetimeSpendMMK: number;
+  openPreorderCount: number;
+};
+
+export type PublicCustomerOrder = {
+  id: string;
+  orderNumber: string;
+  status: string;
+  type: string;
+  totalMMK: number;
+  amountPaidMMK: number;
+  createdAt: string;
+};
+
 const baseCustomerSelect = {
   id: true,
   name: true,
@@ -117,13 +132,33 @@ export class CustomerService {
     return { items: customers.map(withLastOrder), pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async get(shopId: string, id: string): Promise<PublicCustomer> {
+  async get(shopId: string, id: string): Promise<CustomerDetail> {
     const customer = await this.prisma.customer.findFirst({
       where: { id, shopId },
       select: baseCustomerSelect,
     });
     if (!customer) throw new AppError(ErrorCodes.NOT_FOUND, 404);
-    return withLastOrder(customer);
+
+    const [spendAgg, openPreorderCount] = await Promise.all([
+      this.prisma.order.aggregate({
+        where: { shopId, customerId: id, status: { not: 'CANCELLED' } },
+        _sum: { totalMMK: true },
+      }),
+      this.prisma.order.count({
+        where: {
+          shopId,
+          customerId: id,
+          type: 'PREORDER',
+          status: { notIn: ['COMPLETED', 'CANCELLED'] },
+        },
+      }),
+    ]);
+
+    return {
+      ...withLastOrder(customer),
+      lifetimeSpendMMK: spendAgg._sum.totalMMK ?? 0,
+      openPreorderCount,
+    };
   }
 
   async create(
@@ -206,19 +241,38 @@ export class CustomerService {
     return withLastOrder(customer);
   }
 
-  async orderHistory(shopId: string, customerId: string) {
+  async orderHistory(shopId: string, customerId: string, page = 1, limit = 10) {
     await this.get(shopId, customerId);
-    return this.prisma.order.findMany({
-      where: { shopId, customerId },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        totalMMK: true,
-        amountPaidMMK: true,
-        createdAt: true,
-      },
-    });
+    const where = { shopId, customerId };
+    const [total, orders] = await this.prisma.$transaction([
+      this.prisma.order.count({ where }),
+      this.prisma.order.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          orderNumber: true,
+          status: true,
+          type: true,
+          totalMMK: true,
+          amountPaidMMK: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+    return {
+      items: orders.map((order) => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        type: order.type,
+        totalMMK: order.totalMMK,
+        amountPaidMMK: order.amountPaidMMK,
+        createdAt: order.createdAt.toISOString(),
+      })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 }

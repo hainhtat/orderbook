@@ -1,4 +1,5 @@
-import { BarChart3, Box, ClipboardList, LogOut, Users } from 'lucide-react'
+import { BookOpen, Bot, Box, ClipboardList, Ellipsis, Home, LineChart, LogOut, Settings, Users } from 'lucide-react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 import { LanguageSwitcher } from '@/components/language-switcher'
@@ -6,10 +7,13 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/auth/auth-provider'
 import { cn } from '@/lib/utils'
+import { AssistantDialog } from '@/features/assistant/assistant-dialog'
 
 export function AppHeader() {
   const { t } = useTranslation('common')
   const { logout, state } = useAuth()
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
 
   const shopName =
     state.status === 'authenticated' ? state.shop?.name : undefined
@@ -76,6 +80,30 @@ export function AppHeader() {
               {t('nav.orders')}
             </NavLink>
             <NavLink
+              to="/cashbook"
+              className={({ isActive }) =>
+                cn(
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+                  isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground',
+                )
+              }
+            >
+              {t('nav.cashbook')}
+            </NavLink>
+            <NavLink
+              to="/reports"
+              className={({ isActive }) =>
+                cn(
+                  'rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground',
+                  isActive
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground',
+                )
+              }
+            >
+              {t('nav.reports')}
+            </NavLink>
+            <NavLink
               to="/settings"
               className={({ isActive }) =>
                 cn(
@@ -110,19 +138,22 @@ export function AppHeader() {
         </div>
       </div>
       </header>
-      <nav aria-label={t('navigation')} className="fixed inset-x-3 bottom-3 z-50 flex items-center justify-around rounded-3xl border bg-card/95 p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 h-24 bg-background md:hidden" aria-hidden="true" />
+      <nav aria-label={t('navigation')} className="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-[calc(100vw-1.5rem)] items-center justify-around overflow-visible rounded-3xl border bg-card p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl md:hidden">
         {[
+          ['/dashboard', Home, t('nav.dashboard')],
           ['/orders', ClipboardList, t('nav.orders')],
           ['/products', Box, t('nav.products')],
           ['/customers', Users, t('nav.customers')],
-          ['/dashboard', BarChart3, t('nav.dashboard')],
+          ['/more', Ellipsis, t('nav.more')],
         ].map(([to, Icon, label]) => (
-          <NavLink key={to as string} to={to as string} className={({ isActive }) => cn('flex min-w-16 flex-col items-center gap-1 rounded-2xl px-3 py-2 text-[10px] font-semibold', isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
-            <Icon className="h-5 w-5" />
-            <span>{label as string}</span>
-          </NavLink>
+              to === '/more' ? <div key={to as string} className="relative min-w-0 flex-1"><button type="button" aria-expanded={moreOpen} onClick={() => setMoreOpen((open) => !open)} className={cn('flex w-full flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[9px] font-semibold sm:text-[10px]', moreOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}><Icon className="h-5 w-5" /><span>{label as string}</span></button>{moreOpen ? <div className="absolute bottom-full right-0 mb-3 min-w-36 rounded-2xl border bg-card p-2 shadow-xl"><NavLink onClick={() => setMoreOpen(false)} to="/cashbook" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-accent"><BookOpen className="h-4 w-4" />{t('nav.cashbook')}</NavLink><NavLink onClick={() => setMoreOpen(false)} to="/reports" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-accent"><LineChart className="h-4 w-4" />{t('nav.reports')}</NavLink><NavLink onClick={() => setMoreOpen(false)} to="/settings" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-accent"><Settings className="h-4 w-4" />{t('nav.settings')}</NavLink></div> : null}</div> : <NavLink key={to as string} to={to as string} className={({ isActive }) => cn('flex min-w-0 flex-1 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[9px] font-semibold sm:text-[10px]', isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}><Icon className="h-5 w-5" /><span>{label as string}</span></NavLink>
         ))}
       </nav>
+      <button type="button" aria-label={t('nav.assistant')} onClick={() => setAssistantOpen(true)} className="fixed bottom-[calc(6.25rem+env(safe-area-inset-bottom))] right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:bottom-6 md:right-6">
+        <Bot className="h-6 w-6" />
+      </button>
+      <AssistantDialog open={assistantOpen} onOpenChange={setAssistantOpen} />
     </>
   )
 }

@@ -4,6 +4,7 @@ import type { CustomerService } from './customer.service.js';
 import { createCustomerController } from './customer.controller.js';
 import {
   createCustomerValidators,
+  customerOrdersValidators,
   listCustomersValidators,
   updateCustomerValidators,
 } from './customer.validators.js';
@@ -40,7 +41,7 @@ export function createCustomerRouter(
     '/:id/orders',
     authenticate,
     tenant,
-    param('id').isString().notEmpty(),
+    customerOrdersValidators,
     validateRequest,
     controller.orders,
   );

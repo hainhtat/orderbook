@@ -9,14 +9,15 @@ import { useOrders } from '@/features/orders/use-orders';
 import { useLocale } from '@/i18n/LocaleProvider';
 import { useTheme } from '@/theme/ThemeProvider';
 import { formatMMK } from '@/utils/format-mmk';
-import { orderStatuses, type OrderStatus } from './order-types';
+import { orderStatuses, type StandardOrderStatus } from './order-types';
+import { orderStatusTranslationKey } from './order-status-label';
 
 export function OrderListScreen() {
   const router = useRouter();
   const { t } = useLocale();
   const { colors } = useTheme();
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<OrderStatus | undefined>();
+  const [status, setStatus] = useState<StandardOrderStatus | undefined>();
   const deferredSearch = useDeferredValue(search);
   const { data, isLoading, isError, error, refetch, isRefetching } = useOrders({
     search: deferredSearch.trim() || undefined,
@@ -53,7 +54,7 @@ export function OrderListScreen() {
           {orderStatuses.map((value) => (
             <FilterChip
               key={value}
-              label={t(`orders.statuses.${value}`)}
+              label={t(orderStatusTranslationKey(value))}
               selected={status === value}
               onPress={() => setStatus(value)}
               colors={colors}
@@ -121,7 +122,7 @@ export function OrderListScreen() {
                     {formatMMK(order.totalMMK)}
                   </Text>
                   <Text textStyle={{ color: colors.textMuted, fontSize: 13 }}>
-                    {t('orders.status', { status: t(`orders.statuses.${order.status}`) })}
+                    {t('orders.status', { status: t(orderStatusTranslationKey(order.status)) })}
                   </Text>
                 </Column>
               </Pressable>

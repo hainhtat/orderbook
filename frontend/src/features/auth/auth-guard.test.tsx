@@ -1,32 +1,7 @@
 import { screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { mockAuthenticatedFetch } from '@/test/mock-fetch'
 import { renderApp } from '@/test/render'
-
-const mockUser = {
-  id: 'user-1',
-  name: 'Test Owner',
-  email: 'owner@example.com',
-}
-
-const mockShop = {
-  id: 'shop-1',
-  name: 'Test Shop',
-  slug: 'test-shop',
-}
-
-function mockVerifySuccess(withShop = true) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({
-        user: mockUser,
-        shop: withShop ? mockShop : null,
-      }),
-    }),
-  )
-}
 
 function mockVerifyPending() {
   vi.stubGlobal(
@@ -61,7 +36,7 @@ describe('AuthGuard', () => {
   })
 
   it('renders dashboard after successful verify', async () => {
-    mockVerifySuccess()
+    mockAuthenticatedFetch()
     localStorage.setItem('order-notebook.accessToken', 'access-token')
 
     renderApp(undefined, { initialRoute: '/dashboard' })

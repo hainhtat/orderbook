@@ -12,6 +12,12 @@ import { CustomerService } from './customers/customer.service.js';
 import { createCustomerRouter } from './customers/customer.routes.js';
 import { OrderService } from './orders/order.service.js';
 import { createOrderRouter } from './orders/order.routes.js';
+import { ReportService } from './reports/report.service.js';
+import { createReportRouter } from './reports/report.routes.js';
+import { CashbookService } from './cashbook/cashbook.service.js';
+import { createCashbookRouter } from './cashbook/cashbook.routes.js';
+import { AiService } from './ai/ai.service.js';
+import { createAiRouter } from './ai/ai.routes.js';
 import { createAuthenticate } from '../../middleware/authenticate.js';
 import { createTenantMiddleware } from '../../middleware/tenant.js';
 import { Router } from 'express';
@@ -33,6 +39,9 @@ export function createV1Router(deps: V1Dependencies): Router {
   const categoryService = new CategoryService(deps.prisma);
   const customerService = new CustomerService(deps.prisma);
   const orderService = new OrderService(deps.prisma);
+  const reportService = new ReportService(deps.prisma);
+  const cashbookService = new CashbookService(deps.prisma);
+  const aiService = new AiService(deps.prisma, deps.env.AI_ENCRYPTION_KEY, deps.env);
 
   router.use('/health', createHealthRouter());
   router.use('/auth', createAuthRouter(authService, authenticate));
@@ -47,6 +56,9 @@ export function createV1Router(deps: V1Dependencies): Router {
   );
   router.use('/customers', createCustomerRouter(customerService, authenticate, tenant));
   router.use('/orders', createOrderRouter(orderService, authenticate, tenant));
+  router.use('/reports', createReportRouter(reportService, authenticate, tenant));
+  router.use('/cashbook', createCashbookRouter(cashbookService, authenticate, tenant));
+  router.use('/ai', createAiRouter(aiService, authenticate, tenant));
 
   return router;
 }

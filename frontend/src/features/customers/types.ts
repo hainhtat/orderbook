@@ -6,6 +6,8 @@ export type Customer = {
   detailedAddress: string | null
   addressLabel: string | null
   notes: string | null
+  lifetimeSpendMMK?: number
+  openPreorderCount?: number
   lastOrder: {
     id: string
     createdAt: string
@@ -36,7 +38,18 @@ export type CustomerOrder = {
   id: string
   orderNumber: string
   status: string
+  type: string
   totalMMK: number
   amountPaidMMK: number
   createdAt: string
+}
+
+export type CustomerOrdersResult = {
+  orders: CustomerOrder[]
+  pagination?: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }

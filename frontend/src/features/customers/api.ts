@@ -2,7 +2,7 @@ import { apiRequest } from '@/lib/api-client'
 import type {
   CreateCustomerInput,
   Customer,
-  CustomerOrder,
+  CustomerOrdersResult,
   UpdateCustomerInput,
 } from '@/features/customers/types'
 
@@ -34,8 +34,10 @@ export function updateCustomer(id: string, input: UpdateCustomerInput) {
   }).then((data) => data.customer)
 }
 
-export function fetchCustomerOrders(id: string) {
-  return apiRequest<{ orders: CustomerOrder[] }>(`/customers/${id}/orders`).then(
-    (data) => data.orders,
-  )
+export function fetchCustomerOrders(id: string, page = 1, limit = 10) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  })
+  return apiRequest<CustomerOrdersResult>(`/customers/${id}/orders?${params}`)
 }

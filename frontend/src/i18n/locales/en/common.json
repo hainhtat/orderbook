@@ -19,7 +19,11 @@
     "products": "Products",
     "customers": "Customers",
     "orders": "Orders",
-    "settings": "Settings"
+    "reports": "Reports",
+    "more": "More",
+    "cashbook": "Cashbook",
+    "settings": "Settings",
+    "assistant": "Assistant"
   },
   "errors": {
     "generic": "Something went wrong. Please try again."

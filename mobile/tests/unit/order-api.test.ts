@@ -13,9 +13,9 @@ describe('orderApi', () => {
   it('sends trimmed search and status filters to the standard-order list', async () => {
     request.mockResolvedValue({ orders: [] });
 
-    await orderApi.list({ search: '  ONB-42  ', status: 'CONFIRMED' });
+    await orderApi.list({ search: '  ONB-42  ', status: 'TO_DELIVER' });
 
-    expect(request).toHaveBeenCalledWith('/orders?search=ONB-42&status=CONFIRMED');
+    expect(request).toHaveBeenCalledWith('/orders?search=ONB-42&status=TO_DELIVER');
   });
 
   it('records a manual partial payment against an order', async () => {
@@ -40,11 +40,11 @@ describe('orderApi', () => {
   it('uses the validated status transition endpoint', async () => {
     request.mockResolvedValue({});
 
-    await orderApi.transition('order-1', 'COMPLETED');
+    await orderApi.transition('order-1', 'DELIVERED');
 
     expect(request).toHaveBeenCalledWith('/orders/order-1/status', {
       method: 'POST',
-      body: { status: 'COMPLETED', note: undefined },
+      body: { status: 'DELIVERED', note: undefined },
     });
   });
 });

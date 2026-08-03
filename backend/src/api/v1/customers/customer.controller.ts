@@ -48,9 +48,18 @@ export function createCustomerController(customers: CustomerService) {
 
     orders: async (req: Request, res: Response, next: NextFunction) => {
       try {
-        const { id } = matchedData(req) as { id: string };
-        const orders = await customers.orderHistory(req.shop!.shopId, id);
-        res.json({ orders });
+        const { id, page, limit } = matchedData(req) as {
+          id: string;
+          page?: number;
+          limit?: number;
+        };
+        const result = await customers.orderHistory(
+          req.shop!.shopId,
+          id,
+          page,
+          limit,
+        );
+        res.json({ orders: result.items, pagination: result.pagination });
       } catch (e) {
         next(e);
       }

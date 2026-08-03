@@ -1,29 +1,12 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { mockAuthenticatedFetch } from '@/test/mock-fetch'
 import { renderApp } from '@/test/render'
 
 describe('LanguageSwitcher', () => {
   it('switches dashboard heading to Myanmar', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          user: {
-            id: 'user-1',
-            name: 'Test Owner',
-            email: 'owner@example.com',
-          },
-          shop: {
-            id: 'shop-1',
-            name: 'Test Shop',
-            slug: 'test-shop',
-          },
-        }),
-      }),
-    )
+    mockAuthenticatedFetch()
 
     localStorage.setItem('order-notebook.accessToken', 'access-token')
 

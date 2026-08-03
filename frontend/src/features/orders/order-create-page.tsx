@@ -15,12 +15,19 @@ import {
 import { useCreateOrder } from '@/features/orders/use-orders'
 import { ApiError } from '@/lib/api-error'
 import { BackToListLink } from '@/components/back-to-list-link'
+import { ReceiptDialog } from '@/features/orders/receipt-dialog'
+import { useAuth } from '@/features/auth/auth-provider'
+import { useState } from 'react'
+import type { Order } from '@/features/orders/types'
 
 export function OrderCreatePage() {
   const { t } = useTranslation('features')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const createOrder = useCreateOrder()
+  const { state } = useAuth()
+  const [receiptOrder, setReceiptOrder] = useState<Order | null>(null)
+  const assistantDraft = (() => { try { const raw = sessionStorage.getItem('assistant-order-draft'); return raw ? JSON.parse(raw) : undefined } catch { return undefined } })()
 
   return (
     <div className="space-y-6">
@@ -42,12 +49,15 @@ export function OrderCreatePage() {
             mode="create"
             initialCustomerId={searchParams.get('customerId') ?? undefined}
             initialOrderType={searchParams.get('type')?.toLowerCase() === 'preorder' ? 'PREORDER' : 'STANDARD'}
+            initialDraft={assistantDraft}
             isSubmitting={createOrder.isPending}
             onSubmit={async (values) => {
               try {
                 const order = await createOrder.mutateAsync(toCreateOrderPayload(values))
+                sessionStorage.removeItem('assistant-order-draft')
                 toast.success(t('orders.created'))
-                navigate(`/orders/${order.id}`)
+                if (values.printReceipt) setReceiptOrder(order)
+                else navigate(`/orders/${order.id}`)
               } catch (error) {
                 toast.error(
                   error instanceof ApiError ? error.message : t('orders.saveError'),
@@ -57,6 +67,7 @@ export function OrderCreatePage() {
           />
         </CardContent>
       </Card>
+      {receiptOrder && state.status === 'authenticated' && state.shop ? <ReceiptDialog order={receiptOrder} shop={state.shop} onClose={() => navigate(`/orders/${receiptOrder.id}`)} /> : null}
     </div>
   )
 }

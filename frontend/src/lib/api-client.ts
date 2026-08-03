@@ -93,10 +93,10 @@ export type ApiRequestOptions = Omit<RequestInit, 'body'> & {
   retried?: boolean
 }
 
-export async function apiRequest<T>(
+export async function apiResponse(
   path: string,
   options: ApiRequestOptions = {},
-): Promise<T> {
+): Promise<Response> {
   const { body, auth = true, retried = false, headers, ...rest } = options
 
   const requestHeaders = new Headers(headers)
@@ -128,13 +128,22 @@ export async function apiRequest<T>(
   ) {
     const refreshed = await coordinatedRefresh()
     if (refreshed) {
-      return apiRequest<T>(path, { ...options, retried: true })
+      return apiResponse(path, { ...options, retried: true })
     }
   }
 
   if (!response.ok) {
     throw await parseError(response)
   }
+
+  return response
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<T> {
+  const response = await apiResponse(path, options)
 
   if (response.status === 204) {
     return undefined as T

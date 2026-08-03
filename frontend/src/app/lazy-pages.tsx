@@ -49,6 +49,14 @@ export const PreordersPage = lazy(() =>
     default: PreordersPage,
   })),
 )
+export const ReportsPage = lazy(() =>
+  import('@/features/reports/reports-page').then(({ ReportsPage }) => ({
+    default: ReportsPage,
+  })),
+)
+export const CashbookPage = lazy(() =>
+  import('@/features/cashbook/cashbook-page').then(({ CashbookPage }) => ({ default: CashbookPage })),
+)
 export const OrderCreatePage = lazy(() =>
   import('@/features/orders/order-create-page').then(({ OrderCreatePage }) => ({
     default: OrderCreatePage,
@@ -62,6 +70,7 @@ export const OrderDetailPage = lazy(() =>
 export const SettingsPage = lazy(() =>
   import('@/pages/settings-page').then(({ SettingsPage }) => ({ default: SettingsPage })),
 )
+export const AssistantPage = lazy(() => import('@/features/assistant/assistant-page').then(({ AssistantPage }) => ({ default: AssistantPage })))
 export const NotFoundPage = lazy(() =>
   import('@/pages/not-found-page').then(({ NotFoundPage }) => ({ default: NotFoundPage })),
 )

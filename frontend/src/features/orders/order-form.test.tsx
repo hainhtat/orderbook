@@ -39,7 +39,7 @@ describe('OrderForm', () => {
       />,
     )
 
-    expect(screen.getByRole('checkbox')).toBeChecked()
+    expect(screen.getAllByRole('checkbox')[0]).toBeChecked()
     expect(screen.getByLabelText('Expected fulfillment date')).toBeInTheDocument()
   })
 

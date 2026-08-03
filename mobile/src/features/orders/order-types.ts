@@ -6,10 +6,12 @@ export type DeliverySnapshot = {
   addressLabel?: string | null;
 };
 
-export const orderStatuses = ['DRAFT', 'CONFIRMED', 'COMPLETED', 'CANCELLED'] as const;
-export type OrderStatus = (typeof orderStatuses)[number];
+export const orderStatuses = ['TO_DELIVER', 'DELIVERED', 'CANCELLED'] as const;
+export type StandardOrderStatus = (typeof orderStatuses)[number];
+export type OrderStatus = StandardOrderStatus | string;
 
 export const paymentMethods = [
+  'COD',
   'CASH',
   'BANK_TRANSFER',
   'KBZPAY_MANUAL',
@@ -17,6 +19,7 @@ export const paymentMethods = [
   'OTHER',
 ] as const;
 export type PaymentMethod = (typeof paymentMethods)[number];
+export type PaymentStatus = 'UNPAID' | 'PARTIALLY_PAID' | 'PAID';
 
 export type Payment = {
   id: string;
@@ -43,6 +46,8 @@ export type Order = {
   customerId: string;
   type: string;
   status: OrderStatus;
+  paymentMethod: PaymentMethod | null;
+  paymentStatus: PaymentStatus;
   channel: string;
   channelReference: string | null;
   subtotalMMK: number;
@@ -83,7 +88,7 @@ export type UpdateOrderInput = {
 
 export type OrderListFilters = {
   search?: string;
-  status?: OrderStatus;
+  status?: StandardOrderStatus;
 };
 
 export type RecordPaymentInput = {

@@ -54,6 +54,31 @@ enum OrderChannel {
   OTHER
 }
 
+enum CashAccountType {
+  CASH
+  BANK
+  KBZPAY
+  WAVE
+  COD_CLEARING
+  OTHER
+}
+
+enum CashbookEntryKind {
+  PAYMENT
+  MANUAL_INCOME
+  EXPENSE
+  TRANSFER_IN
+  TRANSFER_OUT
+  OPENING_BALANCE
+  ADJUSTMENT
+  REVERSAL
+}
+
+enum CashDirection {
+  IN
+  OUT
+}
+
 model User {
   id              String           @id @default(cuid())
   email           String           @unique
@@ -80,6 +105,7 @@ model Shop {
   id                    String       @id @default(cuid())
   slug                  String       @unique
   name                  String
+  logoUrl               String?
   phone                 String?
   address               String?
   allowOversell         Boolean      @default(false)
@@ -94,6 +120,8 @@ model Shop {
   orders                Order[]
   aiConfig              AiConfig?
   chatSessions          ChatSession[]
+  cashAccounts          CashAccount[]
+  cashbookEntries       CashbookEntry[]
 }
 
 model ShopMember {
@@ -183,6 +211,7 @@ model Order {
   lineItems         OrderLineItem[]
   payments          Payment[]
   statusHistory     OrderStatusHistory[]
+  cashbookEntries   CashbookEntry[]
 
   @@unique([shopId, orderNumber])
   @@index([shopId, status, createdAt])
@@ -211,8 +240,54 @@ model Payment {
   recordedBy String
   createdAt  DateTime      @default(now())
   order      Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  cashbookEntry CashbookEntry?
 
   @@index([shopId, createdAt])
+}
+
+model CashAccount {
+  id             String          @id @default(cuid())
+  shopId         String
+  name           String
+  type           CashAccountType
+  openingBalance Int             @default(0)
+  isArchived     Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  shop           Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  entries        CashbookEntry[]
+
+  @@unique([shopId, type, name])
+  @@index([shopId, isArchived])
+}
+
+model CashbookEntry {
+  id               String            @id @default(cuid())
+  shopId           String
+  accountId        String
+  orderId          String?
+  paymentId        String?           @unique
+  transferGroupId  String?
+  reversesEntryId  String?           @unique
+  kind             CashbookEntryKind
+  direction        CashDirection
+  amountMMK        Int
+  category         String
+  note             String?
+  occurredAt       DateTime          @default(now())
+  actorId           String
+  createdAt         DateTime          @default(now())
+  shop              Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  account           CashAccount       @relation(fields: [accountId], references: [id])
+  order             Order?            @relation(fields: [orderId], references: [id])
+  payment           Payment?          @relation(fields: [paymentId], references: [id])
+  reversesEntry     CashbookEntry?     @relation("CashbookReversal", fields: [reversesEntryId], references: [id])
+  reversedBy        CashbookEntry?     @relation("CashbookReversal")
+
+  @@index([shopId, occurredAt])
+  @@index([shopId, accountId, occurredAt])
+  @@index([shopId, orderId])
+  @@index([transferGroupId])
 }
 
 model OrderStatusHistory {

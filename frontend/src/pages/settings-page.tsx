@@ -34,6 +34,7 @@ export function SettingsPage() {
     slug: z.string().optional(),
     phone: z.string().optional(),
     address: z.string().optional(),
+    logoUrl: z.string().url(t('settings.logoUrlInvalid')).optional().or(z.literal('')),
   })
 
   type SettingsFormValues = z.infer<typeof schema>
@@ -45,6 +46,7 @@ export function SettingsPage() {
       slug: '',
       phone: '',
       address: '',
+      logoUrl: '',
     },
   })
 
@@ -55,6 +57,7 @@ export function SettingsPage() {
         slug: state.shop.slug,
         phone: state.shop.phone ?? '',
         address: state.shop.address ?? '',
+        logoUrl: state.shop.logoUrl ?? '',
       })
     }
   }, [form, state])
@@ -66,6 +69,7 @@ export function SettingsPage() {
         slug: values.slug || undefined,
         phone: values.phone || undefined,
         address: values.address || undefined,
+        logoUrl: values.logoUrl || undefined,
       })
       setShop(shop)
       toast.success(t('settings.saved'))
@@ -99,6 +103,13 @@ export function SettingsPage() {
         <CardContent>
           <Form {...form}>
             <form className="space-y-4" onSubmit={onSubmit}>
+              <FormField
+                control={form.control}
+                name="logoUrl"
+                render={({ field }) => (
+                  <FormItem><FormLabel>{t('settings.logoUrl')}</FormLabel><FormControl><Input type="url" placeholder="https://…" {...field} /></FormControl><FormMessage /></FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="name"

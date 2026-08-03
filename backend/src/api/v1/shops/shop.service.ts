@@ -19,6 +19,7 @@ export type PublicShop = {
   allowOversell: boolean;
   preorderDepositMinPct: number | null;
   status: string;
+  logoUrl: string | null;
 };
 
 function toPublicShop(shop: Shop): PublicShop {
@@ -31,6 +32,7 @@ function toPublicShop(shop: Shop): PublicShop {
     allowOversell: shop.allowOversell,
     preorderDepositMinPct: shop.preorderDepositMinPct,
     status: shop.status,
+    logoUrl: shop.logoUrl,
   };
 }
 
@@ -84,7 +86,7 @@ export class ShopService {
 
   async updateShop(
     shopId: string,
-    input: Partial<{ name: string; phone: string; address: string; allowOversell: boolean; preorderDepositMinPct: number }>,
+    input: Partial<{ name: string; phone: string; address: string; logoUrl: string; allowOversell: boolean; preorderDepositMinPct: number }>,
   ): Promise<PublicShop> {
     const shop = await this.prisma.shop.update({
       where: { id: shopId },

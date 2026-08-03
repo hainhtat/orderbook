@@ -149,7 +149,11 @@ describe('Milestone 1 catalog and customers', () => {
       .get(`/api/v1/customers/${customerId}`)
       .set(auth);
     expect(detail.status).toBe(200);
-    expect(detail.body.customer.id).toBe(customerId);
+    expect(detail.body.customer).toMatchObject({
+      id: customerId,
+      lifetimeSpendMMK: 0,
+      openPreorderCount: 0,
+    });
 
     const search = await request(app)
       .get('/api/v1/customers?q=Insein')
@@ -179,6 +183,12 @@ describe('Milestone 1 catalog and customers', () => {
       .set(auth);
     expect(orders.status).toBe(200);
     expect(orders.body.orders).toEqual([]);
+    expect(orders.body.pagination).toMatchObject({
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+    });
   });
 
   it('enforces customer tenant isolation and phone uniqueness on update', async () => {

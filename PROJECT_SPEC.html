@@ -402,7 +402,7 @@
     <nav class="sidebar" aria-label="Table of contents">
       <div class="brand">
         <div class="logo">Order Notebook</div>
-        <div class="meta">Spec v1.0 · 2026-07-27 · Myanmar-first</div>
+        <div class="meta">Spec v1.11 · 2026-08-03 · Myanmar-first</div>
       </div>
 
       <h2>Overview</h2>
@@ -438,9 +438,9 @@
           <span class="badge">Staff-only v1</span>
           <span class="badge">MMK only</span>
           <span class="badge">EN + Myanmar</span>
-          <span class="badge">Web + Mobile</span>
+          <span class="badge">Web-first · Mobile deferred</span>
           <span class="badge">JWT auth</span>
-          <span class="badge">Pending stakeholder review</span>
+          <span class="badge">Approved baseline</span>
         </div>
       </header>
 
@@ -758,7 +758,7 @@ Settings
           <span class="flow-step">TO_DELIVER</span><span class="flow-arrow">→</span>
           <span class="flow-step">DELIVERED</span>
         </div>
-        <p>Saving a standard order deducts stock immediately. COD stays unpaid until collection is recorded; marking an unpaid COD order delivered prompts payment entry. Cancelling before delivery restores stock.</p>
+        <p>Saving a standard order deducts stock immediately. COD stays unpaid until collection is recorded. On delivery, staff choose where the rider paid them and can record a collection fee; gross receipt and fee are posted together so cashbook balances show net proceeds. Cancelling before delivery restores stock.</p>
 
         <h3 id="s9-preorder-flow">Pre-order fulfillment lifecycle</h3>
         <div class="flow" style="flex-direction:column; align-items:stretch;">
@@ -880,7 +880,8 @@ Settings
         <table>
           <thead><tr><th>Item</th><th>Resolution</th></tr></thead>
           <tbody>
-            <tr><td>Reporting depth</td><td>MVP in §5.8 — confirm before M4</td></tr>
+            <tr><td>Reporting depth</td><td>MVP in §5.8 confirmed; sales recognize delivered standard orders and completed pre-orders only</td></tr>
+            <tr><td>Cashbook</td><td>Actual money movement is tracked separately; order payments post automatically and manual entries remain auditable</td></tr>
             <tr><td>Extra channels</td><td>Messenger primary; PHONE/IN_PERSON tags supported</td></tr>
             <tr><td>Staff roles</td><td>Owner only v1; enum extensible</td></tr>
             <tr><td>Order numbers</td><td><code>{PREFIX}-{YYYY}-{SEQ}</code> server-side</td></tr>

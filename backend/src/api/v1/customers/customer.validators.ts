@@ -33,3 +33,9 @@ export const listCustomersValidators = [
   query('page').optional().isInt({ min: 1 }).toInt(),
   query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
 ];
+
+export const customerOrdersValidators = [
+  param('id').isString().notEmpty(),
+  query('page').optional().isInt({ min: 1 }).toInt(),
+  query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+];

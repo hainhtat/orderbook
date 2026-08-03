@@ -268,7 +268,7 @@ export class ProductService {
           if (!canReserve) continue;
           for (const [pid, qty] of quantities) {
             await tx.product.update({ where: { id: pid }, data: { reservedQty: { increment: qty } } });
-            await tx.stockAdjustment.create({ data: { shopId, productId: pid, deltaQty: 0, reason: 'PREORDER_RESERVATION', note: `Order ${order.orderNumber} reserved after replenishment`, actorId } });
+            await tx.stockAdjustment.create({ data: { shopId, productId: pid, deltaQty: -qty, reason: 'PREORDER_RESERVATION', note: `Order ${order.orderNumber} reserved after replenishment`, actorId } });
           }
           await tx.orderStatusHistory.create({ data: { orderId: order.id, fromStatus: 'AWAITING_STOCK', toStatus: 'RESERVED', actorId } });
           await tx.order.update({ where: { id: order.id }, data: { status: 'RESERVED' } });

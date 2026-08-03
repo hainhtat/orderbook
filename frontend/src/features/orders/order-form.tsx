@@ -21,9 +21,10 @@ type OrderFormProps = {
   initialOrderType?: 'STANDARD' | 'PREORDER'
   onSubmit: (values: OrderFormValues) => Promise<void>
   isSubmitting?: boolean
+  initialDraft?: { customerId?: string | null; newCustomer?: { name?: string; phone?: string } | null; lineItems?: Array<{ productId: string; quantity: number }>; notes?: string }
 }
 
-export function OrderForm({ mode, order, initialCustomerId, initialOrderType = 'STANDARD', onSubmit, isSubmitting = false }: OrderFormProps) {
+export function OrderForm({ mode, order, initialCustomerId, initialOrderType = 'STANDARD', initialDraft, onSubmit, isSubmitting = false }: OrderFormProps) {
   const { t } = useTranslation('features')
   const { data: customers = [] } = useCustomers()
   const { data: products = [] } = useProducts()
@@ -36,6 +37,7 @@ export function OrderForm({ mode, order, initialCustomerId, initialOrderType = '
     orderType: z.enum(['STANDARD', 'PREORDER']),
     expectedFulfillAt: z.string(),
     quickCreateCustomer: z.boolean(),
+    printReceipt: z.boolean().optional(),
     channelReference: z.string(),
     discountMMK: z.string().refine((value) => value === '' || (/^\d+$/.test(value) && Number(value) >= 0), t('orders.validation.invalidAmount')),
     notes: z.string(),
@@ -54,20 +56,21 @@ export function OrderForm({ mode, order, initialCustomerId, initialOrderType = '
   const form = useForm<OrderFormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
-      customerId: order?.customerId ?? initialCustomerId ?? '',
+      customerId: order?.customerId ?? initialDraft?.customerId ?? initialCustomerId ?? '',
       orderType: (order?.type as 'STANDARD' | 'PREORDER') ?? initialOrderType,
       expectedFulfillAt: order?.expectedFulfillAt?.slice(0, 10) ?? '',
-      quickCreateCustomer: false,
+      quickCreateCustomer: Boolean(initialDraft?.newCustomer),
       channelReference: order?.channelReference ?? '',
       discountMMK: order ? String(order.discountMMK) : '0',
-      notes: order?.notes ?? '',
+      notes: order?.notes ?? initialDraft?.notes ?? '',
       paymentMethod: order?.paymentMethod ?? '',
-      customerName: order?.customerName ?? '',
-      customerPhone: order?.customerPhone ?? '',
+      customerName: order?.customerName ?? initialDraft?.newCustomer?.name ?? '',
+      customerPhone: order?.customerPhone ?? initialDraft?.newCustomer?.phone ?? '',
       townshipOrCity: order?.townshipOrCity ?? '',
       detailedAddress: order?.detailedAddress ?? '',
       addressLabel: order?.addressLabel ?? '',
-      lineItems: order?.lineItems.map((item) => ({ productId: item.productId ?? '', quantity: String(item.quantity) })) ?? [],
+      lineItems: order?.lineItems.map((item) => ({ productId: item.productId ?? '', quantity: String(item.quantity) })) ?? initialDraft?.lineItems?.map((item) => ({ productId: item.productId, quantity: String(item.quantity) })) ?? [],
+      printReceipt: false,
     },
   })
   const { fields, append, remove } = useFieldArray({ control: form.control, name: 'lineItems' })
@@ -226,7 +229,7 @@ export function OrderForm({ mode, order, initialCustomerId, initialOrderType = '
             <button type="button" aria-expanded={showAdvanced} aria-controls="order-advanced-fields" className="flex w-full items-center justify-between border-t pt-4 text-left text-sm font-medium" onClick={() => setShowAdvanced(!showAdvanced)}>{t('orders.moreOptions')} <span>{showAdvanced ? '−' : '+'}</span></button>
             {showAdvanced && <div id="order-advanced-fields" className="space-y-3"><FormField control={form.control} name="discountMMK" render={({ field }) => <FormItem><FormLabel>{t('orders.fields.discountMMK')}</FormLabel><FormControl><Input inputMode="numeric" {...field} /></FormControl><FormMessage /></FormItem>} /><FormField control={form.control} name="channelReference" render={({ field }) => <FormItem><FormLabel>{t('orders.fields.channelReference')}</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>} /><FormField control={form.control} name="notes" render={({ field }) => <FormItem><FormLabel>{t('orders.fields.notes')}</FormLabel><FormControl><Textarea rows={2} {...field} /></FormControl></FormItem>} /></div>}
 
-            <div className="sticky bottom-3 z-10 flex items-center justify-between gap-3 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur"><div><p className="text-xs text-muted-foreground">{t('orders.total')}</p><p className="text-lg font-semibold">{Math.max(0, subtotal - discount).toLocaleString()} MMK</p></div><Button type="submit" disabled={isSubmitting || fields.length === 0}>{isSubmitting ? t('orders.saving') : t('orders.save')}</Button></div>
+            <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur"><div><p className="text-xs text-muted-foreground">{t('orders.total')}</p><p className="text-lg font-semibold">{Math.max(0, subtotal - discount).toLocaleString()} MMK</p></div><FormField control={form.control} name="printReceipt" render={({ field }) => <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={field.value ?? false} onChange={field.onChange} />{t('orders.printReceipt')}</label>} /><Button type="submit" disabled={isSubmitting || fields.length === 0}>{isSubmitting ? t('orders.saving') : t('orders.save')}</Button></div>
           </section>
         </div>
       </form>

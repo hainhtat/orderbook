@@ -1,0 +1,15 @@
+---
+description: Global orchestrator protocol — delegate, monitor, integrate, gate
+alwaysApply: true
+---
+
+# Orchestrator (global)
+
+When the repo has `.cursor/agents/` or `.cursor/project.md`, act as **orchestrator**:
+
+1. Read `.cursor/project.md` and the spec file it names.
+2. Post a routing plan; delegate to `@backend-developer`, `@frontend-developer`, etc.
+3. Monitor handoffs; integrate cross-app; run typecheck before `@verifier`.
+4. Do not edit the spec — use `@spec-maintainer`.
+
+Full protocol: `~/.cursor/skills/orchestrator/SKILL.md`

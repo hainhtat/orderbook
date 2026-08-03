@@ -134,6 +134,11 @@
     "ordersDescription": "Past orders for this customer.",
     "ordersEmpty": "No orders yet for this customer.",
     "ordersLoadError": "Could not load order history.",
+    "lifetimeSpend": "Lifetime spend",
+    "openPreorders": "Open pre-orders",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOf": "Page {{page}} of {{total}}",
     "orderColumns": {
       "number": "Order #",
       "status": "Status",
@@ -145,6 +150,7 @@
     "title": "Orders",
     "description": "Record messenger orders with structured delivery details.",
     "addOrder": "New order",
+    "viewPreorders": "Pre-orders",
     "addFirstOrder": "Create your first order",
     "emptyTitle": "No orders yet",
     "emptyDescription": "Create an order to track products, payments, and delivery.",
@@ -167,6 +173,15 @@
     "actionError": "Could not update the order.",
     "statusUpdated": "Order status updated.",
     "recordPayment": "Record payment",
+    "printReceipt": "Print receipt after saving",
+    "cod": {
+      "collect": "Collect COD",
+      "description": "Record how the rider paid you. Outstanding COD: {{balance}}",
+      "fee": "COD collection fee (optional)",
+      "mmk": "MMK",
+      "netReceived": "Net added to this account: {{amount}}",
+      "submit": "Record COD collection"
+    },
     "balanceDue": "Balance due {{balance}}",
     "confirmAction": "Confirm",
     "close": "Close",
@@ -230,7 +245,12 @@
       "TO_DELIVER": { "title": "Move this order to delivery?", "description": "The order will enter the delivery queue." },
       "DELIVERING": { "title": "Start delivery?", "description": "The order will be marked as being delivered." },
       "DELIVERED": { "title": "Mark this order delivered?", "description": "The order will be marked as delivered." },
-      "CANCELLED": { "title": "Cancel this order?", "description": "This action affects stock and cannot be undone from this screen." }
+      "CANCELLED": { "title": "Cancel this order?", "description": "This action affects stock and cannot be undone from this screen." },
+      "RESERVED": { "title": "Reserve stock for this pre-order?", "description": "Available stock will be reserved for this customer." }
+    },
+    "preorderCancel": {
+      "forfeitureNote": "Deposit forfeiture note (optional)",
+      "forfeiturePlaceholder": "e.g. Customer cancelled after deposit deadline"
     },
     "filters": {
       "search": "Search order, customer, or phone",
@@ -320,7 +340,7 @@
   },
   "preorders": {
     "title": "Pre-orders",
-    "description": "Track deposits, reservations, and fulfillment.",
+    "description": "Handle the next action for every pre-order without chasing technical statuses.",
     "new": "New pre-order",
     "search": "Search pre-orders…",
     "statusFilter": "Pre-order status",
@@ -328,6 +348,146 @@
     "loadError": "Could not load pre-orders.",
     "emptyTitle": "No pre-orders yet",
     "emptyDescription": "Create a pre-order to reserve stock and track fulfillment.",
-    "dateUnset": "Fulfillment date not set"
+    "dateUnset": "Fulfillment date not set",
+    "workQueues": "Pre-order work queues",
+    "view": "View order",
+    "overdue": "{{count}}d overdue",
+    "dueSoon": "Due in {{count}}d",
+    "queues": {
+      "ALL": "All active",
+      "NEEDS_PAYMENT": "Needs payment",
+      "WAITING_STOCK": "Waiting for stock",
+      "READY_TO_DELIVER": "Ready to deliver",
+      "BALANCE_TO_COLLECT": "Balance to collect"
+    },
+    "actions": {
+      "NEEDS_PAYMENT": "Record deposit",
+      "WAITING_STOCK": "Review stock",
+      "READY_TO_DELIVER": "Prepare delivery",
+      "BALANCE_TO_COLLECT": "Collect balance"
+    },
+    "bulk": {
+      "select": "Select {{order}}",
+      "label": "Set fulfillment date for {{count}} selected",
+      "apply": "Update date",
+      "clear": "Clear",
+      "success": "Updated {{count}} pre-orders.",
+      "error": "Could not update the selected pre-orders."
+    }
+  },
+  "cashbook": {
+    "title": "Cashbook",
+    "description": "Track actual money received and spent separately from orders and sales.",
+    "addAccount": "Add account",
+    "addEntry": "Add transaction",
+    "accountSaved": "Account added.",
+    "entrySaved": "Transaction recorded.",
+    "saveError": "Could not save the cashbook change.",
+    "loadError": "Could not load the cashbook.",
+    "accounts": "Accounts",
+    "transactions": "Recent transactions",
+    "empty": "No cashbook transactions yet.",
+    "accountHelp": "Add a cash box, bank, or wallet and its current opening balance.",
+    "entryHelp": "Record actual money in or out. Order payments are added automatically.",
+    "name": "Account name",
+    "type": "Account type",
+    "openingBalance": "Opening balance (MMK)",
+    "account": "Account",
+    "direction": "Money direction",
+    "moneyIn": "Money in",
+    "moneyOut": "Money out",
+    "amount": "Amount (MMK)",
+    "category": "Category",
+    "categoryPlaceholder": "Example: Taxi, packaging, delivery",
+    "note": "Note",
+    "save": "Save",
+    "summary": { "moneyInMMK": "Money in", "moneyOutMMK": "Money out", "netMMK": "Net cash flow" },
+    "expenseCategories": { "TAXI": "Taxi", "DELIVERY": "Delivery fee", "PACKAGING": "Packaging", "MEALS": "Meals", "OTHER_EXPENSE": "Other" },
+    "daily": {
+      "title": "Staff daily report · {{date}}",
+      "description": "What was sent, who received it, sales completed, money received, and expenses reported today.",
+      "orderCount": "Orders sent",
+      "salesMMK": "Completed sales",
+      "moneyReceivedMMK": "Money received",
+      "expensesMMK": "Expenses",
+      "netCashMMK": "Net cash",
+      "sentOrders": "Sent to customers",
+      "productsSent": "Products sent",
+      "noOrders": "No delivered orders for this date.",
+      "noProducts": "No products sent for this date."
+    },
+    "accountTypes": { "CASH": "Cash", "BANK": "Bank", "KBZPAY": "KBZPay", "WAVE": "Wave Money", "COD_CLEARING": "COD remaining", "OTHER": "Other" },
+    "categories": { "COD_COLLECTION_FEE": "COD collection fee" },
+    "codNeedsCollection": "Outstanding COD to collect"
+  },
+  "assistant": {
+    "title": "Order assistant",
+    "description": "Paste a customer message. AI will propose a structured draft for you to review before anything is saved.",
+    "chatDescription": "Ask about your shop, orders, stock, or start a new order.",
+    "greeting": "Hi! Tell me what you need. I can answer shop questions, remind you about preorder stock, and prepare an order draft.",
+    "draftReady": "I prepared an order draft. Please review it before saving.",
+    "send": "Send message",
+    "placeholder": "Example: Ma Ma wants 2 facial creams. Phone 09123456789. Deliver to No. 5, Pyay Road.",
+    "createDraft": "Create draft",
+    "working": "Preparing draft…",
+    "error": "The assistant could not prepare a draft.",
+    "settings": "Check AI settings",
+    "draftTitle": "Draft for review",
+    "customer": "Customer",
+    "newCustomer": "New customer",
+    "confidence": "Confidence",
+    "reviewOrder": "Review in order form"
+  },
+  "reports": {
+    "title": "Reports",
+    "description": "Sales, products, pre-order pipeline, and payment breakdown for a date range.",
+    "loadError": "Could not load reports.",
+    "exportCsv": "Export orders CSV",
+    "exporting": "Exporting…",
+    "exportSuccess": "Orders exported.",
+    "exportError": "Could not export orders.",
+    "filters": {
+      "title": "Date range",
+      "description": "Reports exclude cancelled orders from revenue totals.",
+      "from": "From",
+      "to": "To",
+      "groupBy": "Group sales by",
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "invalidRange": "The start date must be on or before the end date."
+    },
+    "salesSummary": {
+      "title": "Sales summary",
+      "description": "Order count and revenue for the selected period.",
+      "orders": "Orders",
+      "revenue": "Revenue",
+      "period": "Period"
+    },
+    "topProducts": {
+      "title": "Top products",
+      "description": "Best sellers by revenue in the selected period.",
+      "product": "Product",
+      "qty": "Qty",
+      "revenue": "Revenue",
+      "empty": "No product sales in this period."
+    },
+    "pipeline": {
+      "title": "Pre-order pipeline",
+      "description": "Open pre-orders grouped by current status.",
+      "status": "Status",
+      "count": "Orders",
+      "paid": "Deposits paid",
+      "balance": "Balance due",
+      "empty": "No active pre-orders."
+    },
+    "payments": {
+      "title": "Payment methods",
+      "description": "Payments recorded in the selected period.",
+      "method": "Method",
+      "count": "Payments",
+      "amount": "Amount",
+      "empty": "No payments in this period."
+    }
   }
 }

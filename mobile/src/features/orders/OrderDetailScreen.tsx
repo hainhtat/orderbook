@@ -7,10 +7,13 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { ErrorState, LoadingState } from '@/components/ListStates';
 import { Screen } from '@/components/Screen';
 import { useOrder, useTransitionOrder } from '@/features/orders/use-orders';
+import { orderStatusTranslationKey } from '@/features/orders/order-status-label';
 import { useLocale } from '@/i18n/LocaleProvider';
 import { useTheme } from '@/theme/ThemeProvider';
 import { formatDeliveryClipboard } from '@/utils/delivery-clipboard';
 import { formatMMK } from '@/utils/format-mmk';
+
+type TransitionStatus = 'DELIVERED' | 'CANCELLED';
 
 export function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,8 +44,8 @@ export function OrderDetailScreen() {
     );
   }
 
-  const canEdit = order.status === 'DRAFT' || order.status === 'CONFIRMED';
-  const transitionTo = (status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') => {
+  const canEdit = order.status === 'TO_DELIVER';
+  const transitionTo = (status: TransitionStatus) => {
     const perform = async () => {
       try {
         await transition.mutateAsync({ status });
@@ -93,7 +96,7 @@ export function OrderDetailScreen() {
             })}
           </Text>
           <Text textStyle={{ color: colors.textMuted }}>
-            {t('orders.status', { status: t(`orders.statuses.${order.status}`) })}
+            {t('orders.status', { status: t(orderStatusTranslationKey(order.status)) })}
           </Text>
         </Column>
 
@@ -123,19 +126,11 @@ export function OrderDetailScreen() {
           </Column>
         </View>
 
-        {order.status === 'DRAFT' ? (
+        {order.status === 'TO_DELIVER' ? (
           <Button
-            testID="order-confirm"
-            label={t('orders.actions.CONFIRMED')}
-            onPress={() => transitionTo('CONFIRMED')}
-            disabled={transition.isPending}
-          />
-        ) : null}
-        {order.status === 'CONFIRMED' ? (
-          <Button
-            testID="order-complete"
-            label={t('orders.actions.COMPLETED')}
-            onPress={() => transitionTo('COMPLETED')}
+            testID="order-deliver"
+            label={t('orders.actions.DELIVERED')}
+            onPress={() => transitionTo('DELIVERED')}
             disabled={transition.isPending}
           />
         ) : null}

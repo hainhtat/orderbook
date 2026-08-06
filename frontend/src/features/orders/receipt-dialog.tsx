@@ -40,7 +40,10 @@ async function ensureReceiptFonts(): Promise<void> {
   if (!('fonts' in document)) return
   try {
     await Promise.all([
-      document.fonts.load(`600 24px ${RECEIPT_FONT}`),
+      document.fonts.load(`600 44px ${RECEIPT_FONT}`),
+      document.fonts.load(`600 28px ${RECEIPT_FONT}`),
+      document.fonts.load(`500 24px ${RECEIPT_FONT}`),
+      document.fonts.load(`400 22px ${RECEIPT_FONT}`),
       document.fonts.load(`400 18px ${RECEIPT_FONT}`),
       document.fonts.load(`500 22px "Noto Sans Myanmar"`),
     ])
@@ -49,57 +52,188 @@ async function ensureReceiptFonts(): Promise<void> {
   }
 }
 
+const PNG_WIDTH = 1080
+const PNG_MARGIN = 48
+const CONTENT_LEFT = 110
+const CONTENT_RIGHT = 970
+const AMOUNT_COL = 970
+const ITEM_NAME_MAX = 620
+const FOOTER_MAX = 860
+const ADDRESS_MAX = 860
+
+function createMeasureContext(): CanvasRenderingContext2D {
+  const canvas = document.createElement('canvas')
+  canvas.width = PNG_WIDTH
+  canvas.height = 1
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas unavailable')
+  return ctx
+}
+
+function wrapLines(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string[] {
+  const trimmed = text.trim()
+  if (!trimmed) return []
+
+  const words = trimmed.split(/\s+/)
+  const lines: string[] = []
+  let current = ''
+
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word
+    if (ctx.measureText(next).width > maxWidth && current) {
+      lines.push(current)
+      current = word
+    } else {
+      current = next
+    }
+  }
+
+  if (current) lines.push(current)
+  return lines
+}
+
+function drawWrappedText(
+  ctx: CanvasRenderingContext2D,
+  lines: string[],
+  x: number,
+  y: number,
+  lineHeight: number,
+  align: CanvasTextAlign = 'left',
+) {
+  ctx.textAlign = align
+  for (const line of lines) {
+    ctx.fillText(line, x, y)
+    y += lineHeight
+  }
+  return y
+}
+
+type ReceiptLayout = {
+  height: number
+  hasLogo: boolean
+  addressLines: string[]
+  footerLines: string[]
+  itemBlocks: Array<{ nameLines: string[]; rowHeight: number }>
+}
+
+function measureReceiptLayout(
+  ctx: CanvasRenderingContext2D,
+  order: Order,
+  shop: Shop,
+  hasLogo: boolean,
+): ReceiptLayout {
+  let y = PNG_MARGIN + 80
+
+  if (hasLogo) y += 140
+
+  y += 40 // shop name
+  if (shop.address) y += 32
+  if (shop.phone) y += 32
+  y += 28 + 42 // divider + gap
+
+  y += 14 + 34 + 34 + 40 // order meta block
+  y += 42 // divider
+
+  y += 14 + 34 + 34 + 32 // bill to name + phone
+  ctx.font = `400 22px ${RECEIPT_FONT}`
+  const addressText = [order.detailedAddress, order.townshipOrCity, order.addressLabel]
+    .filter(Boolean)
+    .join(', ')
+  const addressLines = wrapLines(ctx, addressText, ADDRESS_MAX)
+  y += addressLines.length * 30
+  y += 48
+
+  y += 32 + 18 + 36 // table header
+
+  ctx.font = `500 24px ${RECEIPT_FONT}`
+  const itemBlocks = order.lineItems.map((item) => {
+    const nameLines = wrapLines(ctx, item.productName, ITEM_NAME_MAX)
+    const rowHeight = Math.max(58, 28 + nameLines.length * 30 + 8)
+    return { nameLines, rowHeight }
+  })
+  y += itemBlocks.reduce((sum, block) => sum + block.rowHeight, 0)
+
+  y += 8 + 40 // divider before totals
+  y += 34 // subtotal
+  if (order.discountMMK) y += 34
+  y += 44 // total
+  y += 36 // gap before footer
+
+  ctx.font = `400 22px ${RECEIPT_FONT}`
+  const footerLines = wrapLines(ctx, receiptFooter(shop), FOOTER_MAX)
+  y += footerLines.length * 32
+  y += PNG_MARGIN + 24
+
+  return {
+    height: Math.ceil(y),
+    hasLogo,
+    addressLines,
+    footerLines,
+    itemBlocks,
+  }
+}
+
 async function receiptPng(order: Order, shop: Shop): Promise<Blob> {
   await ensureReceiptFonts()
 
-  const width = 1080
-  const contentLeft = 110
-  const contentRight = 970
-  const amountCol = 970
-  const lineHeight = 58
-  const height = 900 + order.lineItems.length * lineHeight
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas unavailable')
-
-  ctx.fillStyle = '#f8fafc'
-  ctx.fillRect(0, 0, width, height)
-  ctx.fillStyle = '#ffffff'
-  ctx.fillRect(48, 48, width - 96, height - 96)
-  // Thin elegant accent line
-  ctx.fillStyle = ACCENT
-  ctx.fillRect(48, 48, width - 96, 4)
-
-  let y = 128
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#0f172a'
-  ctx.font = `600 44px ${RECEIPT_FONT}`
-
+  let hasLogo = false
+  let logoImage: HTMLImageElement | null = null
   if (shop.logoUrl) {
     try {
       const image = new Image()
       image.crossOrigin = 'anonymous'
       image.src = shop.logoUrl
       await image.decode()
-      ctx.drawImage(image, width / 2 - 56, y - 36, 112, 112)
-      y += 140
+      logoImage = image
+      hasLogo = true
     } catch {
-      /* name fallback */
+      hasLogo = false
     }
   }
 
-  ctx.fillText(shop.name, width / 2, y)
+  const measureCtx = createMeasureContext()
+  const layout = measureReceiptLayout(measureCtx, order, shop, hasLogo)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = PNG_WIDTH
+  canvas.height = layout.height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) throw new Error('Canvas unavailable')
+
+  const cardTop = PNG_MARGIN
+  const cardHeight = layout.height - PNG_MARGIN * 2
+
+  ctx.fillStyle = '#f8fafc'
+  ctx.fillRect(0, 0, PNG_WIDTH, layout.height)
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(PNG_MARGIN, cardTop, PNG_WIDTH - PNG_MARGIN * 2, cardHeight)
+  ctx.fillStyle = ACCENT
+  ctx.fillRect(PNG_MARGIN, cardTop, PNG_WIDTH - PNG_MARGIN * 2, 4)
+
+  let y = cardTop + 80
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#0f172a'
+  ctx.font = `600 44px ${RECEIPT_FONT}`
+
+  if (logoImage) {
+    ctx.drawImage(logoImage, PNG_WIDTH / 2 - 56, y - 36, 112, 112)
+    y += 140
+  }
+
+  ctx.fillText(shop.name, PNG_WIDTH / 2, y)
   y += 40
   ctx.font = `400 22px ${RECEIPT_FONT}`
   ctx.fillStyle = '#94a3b8'
   if (shop.address) {
-    ctx.fillText(shop.address, width / 2, y)
+    ctx.fillText(shop.address, PNG_WIDTH / 2, y)
     y += 32
   }
   if (shop.phone) {
-    ctx.fillText(shop.phone, width / 2, y)
+    ctx.fillText(shop.phone, PNG_WIDTH / 2, y)
     y += 32
   }
 
@@ -107,95 +241,108 @@ async function receiptPng(order: Order, shop: Shop): Promise<Blob> {
   ctx.strokeStyle = '#e2e8f0'
   ctx.lineWidth = 1
   ctx.beginPath()
-  ctx.moveTo(contentLeft, y)
-  ctx.lineTo(contentRight, y)
+  ctx.moveTo(CONTENT_LEFT, y)
+  ctx.lineTo(CONTENT_RIGHT, y)
   ctx.stroke()
   y += 42
 
   ctx.textAlign = 'left'
   ctx.fillStyle = '#94a3b8'
   ctx.font = `500 14px ${RECEIPT_FONT}`
-  ctx.fillText('Order', contentLeft, y)
+  ctx.fillText('Order', CONTENT_LEFT, y)
   ctx.textAlign = 'right'
-  ctx.fillText('Date', contentRight, y)
+  ctx.fillText('Date', CONTENT_RIGHT, y)
   y += 34
   ctx.textAlign = 'left'
   ctx.fillStyle = '#0f172a'
   ctx.font = `600 28px ${RECEIPT_FONT}`
-  ctx.fillText(order.orderNumber, contentLeft, y)
+  ctx.fillText(order.orderNumber, CONTENT_LEFT, y)
   ctx.textAlign = 'right'
   ctx.font = `400 22px ${RECEIPT_FONT}`
   ctx.fillStyle = '#475569'
-  ctx.fillText(new Date(order.createdAt).toLocaleDateString(), contentRight, y)
+  ctx.fillText(new Date(order.createdAt).toLocaleDateString(), CONTENT_RIGHT, y)
   y += 34
   ctx.fillStyle = '#0f172a'
   ctx.font = `500 22px ${RECEIPT_FONT}`
-  ctx.fillText(formatPaymentLabel(order.paymentMethod), contentRight, y)
+  ctx.fillText(formatPaymentLabel(order.paymentMethod), CONTENT_RIGHT, y)
   y += 40
 
   ctx.strokeStyle = '#e2e8f0'
   ctx.beginPath()
-  ctx.moveTo(contentLeft, y)
-  ctx.lineTo(contentRight, y)
+  ctx.moveTo(CONTENT_LEFT, y)
+  ctx.lineTo(CONTENT_RIGHT, y)
   ctx.stroke()
   y += 42
 
   ctx.textAlign = 'left'
   ctx.fillStyle = '#94a3b8'
   ctx.font = `500 14px ${RECEIPT_FONT}`
-  ctx.fillText('Bill to', contentLeft, y)
+  ctx.fillText('Bill to', CONTENT_LEFT, y)
   y += 34
   ctx.fillStyle = '#0f172a'
   ctx.font = `600 26px ${RECEIPT_FONT}`
-  ctx.fillText(order.customerName, contentLeft, y)
+  ctx.fillText(order.customerName, CONTENT_LEFT, y)
   y += 34
   ctx.font = `400 22px ${RECEIPT_FONT}`
   ctx.fillStyle = '#64748b'
-  ctx.fillText(order.customerPhone, contentLeft, y)
+  ctx.fillText(order.customerPhone, CONTENT_LEFT, y)
   y += 32
-  ctx.fillText(`${order.detailedAddress}, ${order.townshipOrCity}`, contentLeft, y)
+  y = drawWrappedText(ctx, layout.addressLines, CONTENT_LEFT, y, 30)
   y += 48
 
-  // Table header — borders only
   ctx.strokeStyle = '#cbd5e1'
   ctx.beginPath()
-  ctx.moveTo(contentLeft, y)
-  ctx.lineTo(contentRight, y)
+  ctx.moveTo(CONTENT_LEFT, y)
+  ctx.lineTo(CONTENT_RIGHT, y)
   ctx.stroke()
   y += 32
   ctx.fillStyle = '#64748b'
   ctx.font = `500 14px ${RECEIPT_FONT}`
   ctx.textAlign = 'left'
-  ctx.fillText('Item', contentLeft, y)
+  ctx.fillText('Item', CONTENT_LEFT, y)
   ctx.textAlign = 'right'
-  ctx.fillText('Amount', amountCol, y)
+  ctx.fillText('Amount', AMOUNT_COL, y)
   y += 18
   ctx.beginPath()
-  ctx.moveTo(contentLeft, y)
-  ctx.lineTo(contentRight, y)
+  ctx.moveTo(CONTENT_LEFT, y)
+  ctx.lineTo(CONTENT_RIGHT, y)
   ctx.stroke()
   y += 36
 
-  for (const item of order.lineItems) {
+  order.lineItems.forEach((item, index) => {
+    const block = layout.itemBlocks[index]
+    const rowTop = y
+
     ctx.textAlign = 'left'
     ctx.fillStyle = '#0f172a'
     ctx.font = `500 24px ${RECEIPT_FONT}`
-    ctx.fillText(item.productName, contentLeft, y)
+    let nameY = rowTop
+    for (const line of block.nameLines) {
+      ctx.fillText(line, CONTENT_LEFT, nameY)
+      nameY += 30
+    }
+
     ctx.fillStyle = '#94a3b8'
     ctx.font = `400 18px ${RECEIPT_FONT}`
-    ctx.fillText(`${formatMMK(item.unitPriceMMK)} × ${item.quantity}`, contentLeft, y + 28)
+    ctx.fillText(
+      `${formatMMK(item.unitPriceMMK)} × ${item.quantity}`,
+      CONTENT_LEFT,
+      nameY + 4,
+    )
+
     ctx.textAlign = 'right'
     ctx.fillStyle = '#0f172a'
     ctx.font = `500 24px ${RECEIPT_FONT}`
-    ctx.fillText(formatMMK(item.lineTotalMMK), amountCol, y + 10)
-    y += lineHeight
-  }
+    ctx.fillText(formatMMK(item.lineTotalMMK), AMOUNT_COL, rowTop + 10)
+
+    y += block.rowHeight
+  })
 
   y += 8
   ctx.strokeStyle = '#e2e8f0'
   ctx.beginPath()
-  ctx.moveTo(contentLeft, y)
-  ctx.lineTo(contentRight, y)
+  ctx.moveTo(CONTENT_LEFT, y)
+  ctx.lineTo(CONTENT_RIGHT, y)
   ctx.stroke()
   y += 40
 
@@ -207,7 +354,7 @@ async function receiptPng(order: Order, shop: Shop): Promise<Blob> {
     ctx.fillText(label, totalsLeft, y)
     ctx.textAlign = 'right'
     ctx.fillStyle = '#0f172a'
-    ctx.fillText(amount, amountCol, y)
+    ctx.fillText(amount, AMOUNT_COL, y)
     y += emphasize ? 44 : 34
   }
 
@@ -215,10 +362,11 @@ async function receiptPng(order: Order, shop: Shop): Promise<Blob> {
   if (order.discountMMK) row('Discount', `-${formatMMK(order.discountMMK)}`)
   row('Total', formatMMK(order.totalMMK), true)
 
+  y += 36
   ctx.textAlign = 'center'
   ctx.font = `400 22px ${RECEIPT_FONT}`
   ctx.fillStyle = '#94a3b8'
-  ctx.fillText(receiptFooter(shop), width / 2, height - 88)
+  drawWrappedText(ctx, layout.footerLines, PNG_WIDTH / 2, y, 32, 'center')
 
   return new Promise((resolve, reject) =>
     canvas.toBlob(

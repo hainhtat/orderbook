@@ -85,6 +85,7 @@
       "deltaQty": "Quantity change",
       "reason": "Reason",
       "note": "Note (optional)",
+      "quickHelp": "Use the quick buttons or type a whole number like +10 or -5.",
       "submit": "Apply adjustment",
       "insufficientStock": "Stock cannot go below zero."
     }

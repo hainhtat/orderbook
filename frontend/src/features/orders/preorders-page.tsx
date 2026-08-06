@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Order } from '@/features/orders/types'
 import { useBulkUpdatePreorderExpectedDate, useOrders } from '@/features/orders/use-orders'
+import { differenceInYangonCalendarDays, formatYangonDate, todayYangonIsoDate } from '@/lib/date'
 import { formatMMK } from '@/lib/format-mmk'
 import { useProducts } from '@/features/products/use-products'
 import type { Product } from '@/features/products/types'
@@ -45,11 +46,7 @@ export function queuesFor(order: Order, products: Product[]): Array<Exclude<Work
 
 function dateUrgency(expectedFulfillAt: string | null) {
   if (!expectedFulfillAt) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const expected = new Date(expectedFulfillAt)
-  expected.setHours(0, 0, 0, 0)
-  const days = Math.round((expected.getTime() - today.getTime()) / 86_400_000)
+  const days = differenceInYangonCalendarDays(expectedFulfillAt, todayYangonIsoDate())
   if (days < 0) return { key: 'overdue', days: Math.abs(days), destructive: true }
   if (days <= 7) return { key: 'dueSoon', days, destructive: false }
   return null
@@ -165,7 +162,7 @@ export function PreordersPage() {
                     {urgency ? <Badge variant={urgency.destructive ? 'destructive' : 'secondary'}><AlertTriangle className="mr-1 h-3 w-3" />{t(`preorders.${urgency.key}`, { count: urgency.days })}</Badge> : null}
                   </div>
                   <div className="mt-4 flex items-center justify-between gap-3 border-t pt-3 text-sm">
-                    <span className="min-w-0 truncate text-muted-foreground"><CalendarClock className="mr-1 inline h-4 w-4" />{order.expectedFulfillAt ? new Date(order.expectedFulfillAt).toLocaleDateString() : t('preorders.dateUnset')}</span>
+                    <span className="min-w-0 truncate text-muted-foreground"><CalendarClock className="mr-1 inline h-4 w-4" />{order.expectedFulfillAt ? formatYangonDate(order.expectedFulfillAt) : t('preorders.dateUnset')}</span>
                     <span className="flex shrink-0 items-center font-medium text-primary">{workQueue ? t(`preorders.actions.${workQueue}`) : t('preorders.view')}<ArrowRight className="ml-1 h-4 w-4" /></span>
                   </div>
                 </Link>

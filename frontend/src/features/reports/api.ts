@@ -10,17 +10,16 @@ import type {
   SalesSummary,
   TopProductRow,
 } from '@/features/reports/types'
+import { shiftYangonIsoDate, todayYangonIsoDate } from '@/lib/date'
 
 function buildRangeParams(range: ReportDateRange, extra?: Record<string, string>) {
   const params = new URLSearchParams({ from: range.from, to: range.to, ...extra })
   return params.toString()
 }
 
-function localIsoDate(date = new Date()): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+function localIsoDate(date: string | Date = new Date()): string {
+  if (typeof date === 'string') return date
+  return todayYangonIsoDate(date)
 }
 
 function todayIsoDate(): string {
@@ -28,9 +27,8 @@ function todayIsoDate(): string {
 }
 
 function monthStartIsoDate(): string {
-  const date = new Date()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  return `${date.getFullYear()}-${month}-01`
+  const today = todayYangonIsoDate()
+  return `${today.slice(0, 7)}-01`
 }
 
 export async function fetchDashboardSnapshot(): Promise<DashboardSnapshot> {
@@ -106,4 +104,4 @@ export async function downloadOrdersCsv(range: ReportDateRange) {
   URL.revokeObjectURL(url)
 }
 
-export { localIsoDate }
+export { localIsoDate, shiftYangonIsoDate, todayYangonIsoDate }

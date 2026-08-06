@@ -19,6 +19,7 @@ import {
 } from '@/features/customers/customer-form'
 import { useCreateCustomer, useCustomers } from '@/features/customers/use-customers'
 import { ApiError } from '@/lib/api-error'
+import { formatYangonDate } from '@/lib/date'
 import { formatMMK } from '@/lib/format-mmk'
 
 export function CustomersListPage() {
@@ -131,7 +132,7 @@ export function CustomersListPage() {
                   <div className="mt-3 rounded-2xl bg-muted/60 p-3">
                     <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       <span className="flex items-center gap-1.5"><ShoppingBag className="h-3.5 w-3.5" />{t('customers.lastOrder')}</span>
-                      <span className="normal-case">{new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(lastOrder.createdAt))} · {formatMMK(lastOrder.totalMMK)}</span>
+                      <span className="normal-case">{formatYangonDate(lastOrder.createdAt, { month: 'short', day: 'numeric' })} · {formatMMK(lastOrder.totalMMK)}</span>
                     </div>
                     <p className="mt-2 text-sm">{lastOrder.itemSummary}</p>
                     <Button asChild size="sm" className="mt-3 ml-auto flex w-fit rounded-full">

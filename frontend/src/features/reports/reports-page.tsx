@@ -39,13 +39,12 @@ import {
 import type { ReportGroupBy } from '@/features/reports/types'
 import { formatMMK } from '@/lib/format-mmk'
 import { useDailyStaffReport } from '@/features/cashbook/use-cashbook'
+import { formatYangonDate, shiftYangonIsoDate, todayYangonIsoDate } from '@/lib/date'
 
 function defaultRange() {
-  const to = new Date()
-  const from = new Date()
-  from.setDate(from.getDate() - 29)
+  const to = todayYangonIsoDate()
   return {
-    from: localIsoDate(from),
+    from: shiftYangonIsoDate(to, -29),
     to: localIsoDate(to),
   }
 }
@@ -132,7 +131,7 @@ export function ReportsPage() {
       ) : null}
 
       {rangeIsValid && daily.data ? <Card className="border-primary/20 bg-primary/[0.03]">
-        <CardHeader><CardTitle>{t('cashbook.daily.title', { date: new Date(`${to}T00:00:00`).toLocaleDateString() })}</CardTitle><CardDescription>{t('cashbook.daily.description')}</CardDescription></CardHeader>
+        <CardHeader><CardTitle>{t('cashbook.daily.title', { date: formatYangonDate(to) })}</CardTitle><CardDescription>{t('cashbook.daily.description')}</CardDescription></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">{(['orderCount', 'salesMMK', 'moneyReceivedMMK', 'expensesMMK', 'netCashMMK'] as const).map((key) => <div key={key} className="rounded-xl border bg-card p-3"><p className="text-xs text-muted-foreground">{t(`cashbook.daily.${key}`)}</p><p className="mt-1 truncate font-semibold">{key === 'orderCount' ? daily.data.totals[key] : formatMMK(daily.data.totals[key])}</p></div>)}</div>
           <div className="grid gap-3 lg:grid-cols-2"><div className="rounded-xl border bg-card p-3"><h3 className="mb-2 font-semibold">{t('cashbook.daily.sentOrders')}</h3>{daily.data.orders.length === 0 ? <p className="text-sm text-muted-foreground">{t('cashbook.daily.noOrders')}</p> : daily.data.orders.map((order) => <Link key={order.id} to={`/orders/${order.id}`} className="block border-b py-2 last:border-0"><div className="flex justify-between gap-2"><span className="truncate font-medium">{order.customerName} · {order.townshipOrCity}</span><span className="shrink-0 font-semibold">{formatMMK(order.totalMMK)}</span></div><p className="truncate text-sm text-muted-foreground">{order.lineItems.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</p></Link>)}</div><div className="rounded-xl border bg-card p-3"><h3 className="mb-2 font-semibold">{t('cashbook.daily.productsSent')}</h3>{daily.data.products.map((product) => <div key={`${product.productSku}:${product.productName}`} className="flex justify-between border-b py-2 last:border-0"><span>{product.productName}</span><span className="font-semibold">× {product.quantity}</span></div>)}</div></div>

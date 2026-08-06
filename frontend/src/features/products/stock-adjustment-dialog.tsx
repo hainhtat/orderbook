@@ -15,6 +15,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -41,6 +42,7 @@ export function StockAdjustmentDialog({
   const { t } = useTranslation('features')
   const adjustStock = useAdjustProductStock(productId)
   const [serverError, setServerError] = useState<string | null>(null)
+  const quickAdjustments = [1, 5, 10]
 
   const schema = z.object({
     deltaQty: z
@@ -70,9 +72,18 @@ export function StockAdjustmentDialog({
     onOpenChange(nextOpen)
   }
 
+  function applyQuickAdjustment(amount: number) {
+    const current = Number(form.getValues('deltaQty')) || 0
+    form.setValue('deltaQty', String(current + amount), {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[min(92dvh,44rem)] overflow-y-auto rounded-3xl p-5 sm:max-w-md sm:p-6">
         <DialogHeader>
           <DialogTitle>{t('products.stockDialog.title')}</DialogTitle>
           <DialogDescription>
@@ -112,8 +123,43 @@ export function StockAdjustmentDialog({
                 <FormItem>
                   <FormLabel>{t('products.stockDialog.deltaQty')}</FormLabel>
                   <FormControl>
-                    <Input inputMode="numeric" placeholder="+10 / -5" {...field} />
+                    <Input
+                      type="text"
+                      inputMode="text"
+                      autoComplete="off"
+                      autoCapitalize="off"
+                      spellCheck={false}
+                      placeholder="+10 / -5"
+                      {...field}
+                    />
                   </FormControl>
+                  <div className="flex flex-wrap gap-2">
+                    {quickAdjustments.map((amount) => (
+                      <Button
+                        key={`add-${amount}`}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => applyQuickAdjustment(amount)}
+                      >
+                        +{amount}
+                      </Button>
+                    ))}
+                    {quickAdjustments.map((amount) => (
+                      <Button
+                        key={`remove-${amount}`}
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => applyQuickAdjustment(-amount)}
+                      >
+                        -{amount}
+                      </Button>
+                    ))}
+                  </div>
+                  <FormDescription>
+                    {t('products.stockDialog.quickHelp')}
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -151,7 +197,7 @@ export function StockAdjustmentDialog({
               </p>
             ) : null}
 
-            <DialogFooter>
+            <DialogFooter className="gap-2 pt-2">
               <Button
                 type="button"
                 variant="outline"

@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import type { Shop } from '@/features/auth/types'
 import type { Order, PaymentMethod } from '@/features/orders/types'
+import { formatYangonDate } from '@/lib/date'
 import { formatMMK } from '@/lib/format-mmk'
 import { cn } from '@/lib/utils'
 
@@ -260,7 +261,7 @@ async function receiptPng(order: Order, shop: Shop): Promise<Blob> {
   ctx.textAlign = 'right'
   ctx.font = `400 22px ${RECEIPT_FONT}`
   ctx.fillStyle = '#475569'
-  ctx.fillText(new Date(order.createdAt).toLocaleDateString(), CONTENT_RIGHT, y)
+  ctx.fillText(formatYangonDate(order.createdAt), CONTENT_RIGHT, y)
   y += 34
   ctx.fillStyle = '#0f172a'
   ctx.font = `500 22px ${RECEIPT_FONT}`
@@ -462,7 +463,7 @@ export function ReceiptDialog({
                     Date
                   </p>
                   <p className="mt-1.5 text-sm text-slate-600">
-                    {new Date(order.createdAt).toLocaleDateString()}
+                    {formatYangonDate(order.createdAt)}
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-800">
                     {formatPaymentLabel(order.paymentMethod)}

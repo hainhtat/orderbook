@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from '../../../../generated/client/index.js';
+import { parseMyanmarDateEnd, parseMyanmarDateStart } from '../../../domain/myanmar-date.js';
 import { resolveOrderNumberPrefix } from '../../../domain/order-number-prefix.js';
 import { AppError } from '../../../errors/app-error.js';
 import { postCodCollectionFee, postPaymentToCashbook } from '../cashbook/cashbook.service.js';
@@ -201,8 +202,8 @@ export class OrderService {
       ...(options.from || options.to
         ? {
             createdAt: {
-              ...(options.from ? { gte: new Date(options.from) } : {}),
-              ...(options.to ? { lte: new Date(options.to) } : {}),
+              ...(options.from ? { gte: parseMyanmarDateStart(options.from) } : {}),
+              ...(options.to ? { lte: parseMyanmarDateEnd(options.to) } : {}),
             },
           }
         : {}),

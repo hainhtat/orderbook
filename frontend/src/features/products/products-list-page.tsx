@@ -188,9 +188,9 @@ export function ProductsListPage() {
               <Link
                 key={product.id}
                 to={`/products/${product.id}`}
-                className="flex items-center gap-4 rounded-3xl border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                className="flex items-start gap-3 rounded-3xl border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:gap-4"
               >
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-muted">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-muted sm:h-16 sm:w-16">
                   {product.imageUrl ? (
                     <img src={product.imageUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
                   ) : (
@@ -198,7 +198,9 @@ export function ProductsListPage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{product.name}</p>
+                  <p className="overflow-hidden text-sm font-semibold leading-5 text-foreground [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] sm:text-base">
+                    {product.name}
+                  </p>
                   <p className="text-sm text-muted-foreground">{formatMMK(product.priceMMK)}</p>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {needsRestock ? (
@@ -237,7 +239,7 @@ export function ProductsListPage() {
                     )}
                   </div>
                 </div>
-                <span className="text-xl text-muted-foreground">›</span>
+                <span className="pt-1 text-xl text-muted-foreground">›</span>
               </Link>
             )
           })}
